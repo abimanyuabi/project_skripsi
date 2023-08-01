@@ -44,11 +44,10 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int programCycle = 0;
 
   //dosing pump def val
-  int dsPumpEventCounter = 0;
-  int dsPumpMlPerMiliseconds = 1;
-  int alkalinitySolutionNeededInMl = 1;
-  int calciumSolutionNeededInMl = 1;
-  int magnesiumSolutionNeededInMl = 1;
+  int dsPumpEventCounter = 0; //dosing pump event counter
+  int dsPumpFlowRate = 0.3; //flow rate is 0.3 per second
+  int dsDivider = 2 ; //dosing event divider 
+  int dsPumpDuration[3]=[1,1,1]; //duration in program cycle
 
 //instrument flag
   //dosing pump
@@ -56,6 +55,23 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int dsPumpChannelFlag = 0; //max 3, default 0
   int dsDoneAtSecond = 0;
   int dsSecondTracker = 0;
+  bool dsDutyFlag = false; //indicate that dosing cycle is active
+  int dsPumpList[3] = [1,2,3] ;//indicate 3 channel dosing pump
+  bool dsDutyTracker[3] = [false, false, false] ;//indicate 3 dosing pump duty status
+  int dsCurrentActive = 0; // indicate current active pump
+  int dsProgramCycleTracker = 0 ;// count and track program cycle during active dosing cycle
+  int dsCurrentEstimatedDuration = 0 ;//represent estimated maximum program cycle for dosing pump to complete task
+  int dsMaxPumpCount = 3 ;
+  float dsFlowRate = 0.3 ;//dosing pump flow rate is 0.3 ml per second
+
+  //solution calculation
+  int alkSolutionConcentration = 1; //raise 1Dkh for 10ml pre-mixed solution
+  int calSolutionConcentration = 1; //raise 1ppm calcium for 10ml pre-mixed solution
+  int magSolutionConcentration = 1; //raise 1ppm magnesium for 10ml pre-mixed solution
+  int alkNeededInDkh = 1;
+  int calNeededInPpm = 1;
+  int magNeededInPpm = 1;
+
 
   //top up pump
   bool tpReservoirPumpFlag = false;
@@ -66,6 +82,7 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
 
 //-------------------------------------------------------------------------------------//
 //MAIN METHOD
+//-------------------------------------------------------------------------------------//
 void setup (){
   Serial.begin(9600);
   tempSensors.begin();
@@ -73,6 +90,7 @@ void setup (){
   pinMode(dsPumpRlyPins[0], OUTPUT);
   pinMode(dsPumpRlyPins[1], OUTPUT);
   pinMode(dsPumpRlyPins[2], OUTPUT);
+  pinMode(wtrLvlInputPin, INPUT);
 }
 void loop (){
   if(programCycle == 10){
@@ -87,6 +105,7 @@ void loop (){
 
 //-------------------------------------------------------------------------------------//
 //INPUT/READING METHODS
+//-------------------------------------------------------------------------------------//
 void rtcTimeTracking(uRTCLib currentRtc){
   if(currentRtc.hour() ==23 && currentRtc.minute() == 59){
     //for resetting the time track counter
@@ -123,43 +142,77 @@ float phProbeReadings(){
     return (7 + ((2.5 - voltage) / 0.18));
   }
 
-//-------------------------------------------------------------------------------------//
-//OUTPUT/CONTROL METHOD
-//dsPumpUtils used as dosing pump activation and duty cycle method, it called once every a complete program cycle (once every second)
-void dsPumpUtils(uRTCLib curentTime){
-  int alkDuration = alkalinitySolutionNeededInMl;
-  if(dsPumpEventFlag==true){
-    //dose start from alk, cal, mag
-    if (currentTime.seconds ==0 && dsPumpChannelFlag <=3 && dsPumpChannelFlag > 0){
-      dsSecondTracker++;
-      if(dsSecondTracker == doseDuration[dsPumpChannelFlag-1])
-    }
-
-  }else{
-    dsPumpChannelFlag = 0;
-    dsPumpEventFlag = false;
-  }
+int tpUpStatus(){
+  return digitalRead(wtrLvlInputPin);
 }
 
-//dsPumpScheduling is used as scheduler for dosing pump array
-void dsPumpScheduling(int divider){
-    if (dsPumpEventCounter ==0  && minuteInDay == minuteInDay/divider*dsPumpEventCounter) {
-      dsPumpEventCounter++;
-      dsPumpEventFlag == true;
-      // dose pump active
-    }
-    else if (dsPumpEventCounter >0 && dsPumpEventCounter<divider && minuteInDay == minuteInDay/divider*dsPumpEventCounter) {
-      dsPumpEventCounter ++;
-      dsPumpEventFlag == true;
-      // dose pump active
-    }
-    else if(dsPumpEventCounter==divider){
-      dsPumpEventCounter =0
-      //dose schedule daily reset
-    }
-}
 float tpPumpUtils(){
   //in celcius
   tempSensors.requestTemperatures(); 
   return tempSensors.getTempCByIndex(0);
+}
+
+//-------------------------------------------------------------------------------------//
+//OUTPUT/CONTROL METHOD
+//-------------------------------------------------------------------------------------//
+
+  //dosing pump task
+  //dsPumpDurationCalc calculate how long the pump need to active for their respective liquid needed to dispense
+void dsPumpDurationCalc(){
+  int alkSolutionNeeded = alkSolutionConcentration*alkNeededInDkh;
+  int calSolutionNeeded = calSolutionConcentration*calNeededInPpm;
+  int magSolutionNeeded = magSolutionConcentration*magNeededInPpm;
+  int alkDuration = (alkSolutionNeeded/dsFlowRate)*10;
+  int calDuration = (calSolutionNeeded / dsFlowRate)*10;
+  int magDuration = (magSolutionNeeded / dsFlowRate) *10;
+  dsPumpDuration = {alkDuration, calDuration, magDuration};
+}
+  //dsPumpUtils used as dosing pump activation and duty cycle method, it called every program cycle
+void dsPumpUtils(){
+  if (dsDutyFlag == true && dsCurrentActive == 0){ //ignitor condition and activation of first pump
+    dsCurrentActive = 1; //initial set pump channel
+    dsDutyTracker[dsCurrentActive-1] = true; //respective duty tracker turned to true
+    dsProgramCycleTracker +=1; //dosing program cycle tracker is started
+    }
+  else if (dsDutyFlag == true && dsCurrentActive>0 && dsCurrentActive<=3){//repeated process in program cycle at dosing event
+    if(dsProgramCycleTracker<=dsPumpDuration[dsCurrentActive-1]){
+      /*when dsProgramCycleTracker less or equal from current channel duration at duration array dosing program cycle will increase by 1 
+      represent 1 program cycle, and it counts until the dosing channel duration duty is done*/
+      dsProgramCycleTracker +=1; //tracker will be increased by one every complete program cycle
+    }else{//reset for next channel
+      dsDutyTracker[dsCurrentActive-1] = false; //the current pump channel duty tracker is dispelled and waiting for the next pump activation
+      dsProgramCycleTracker = 0 ; //the dosing program cycle tracker will be dispelled and resseted to 0
+      dsCurrentActive+=1; //change channel;
+        if (dsCurrentActive <=3){ // if one channel duty duration is done it shift to the next pump channel duty
+          dsDutyTracker[dsCurrentActive-1] = true;
+          }
+    }
+  }else if (dsDutyFlag == true && dsCurrentActive>3){ //when one instance of dosing event id done the dosing duty flag and dosing current active pump flag will be dispelled 
+    //dosing event is done
+    dsDutyFlag = false; //dosing duty flag will be resetted back to false, waiting for next dosing event 
+    dsCurrentActive =0 //current dosing pump will be resetted back to 0 waiting for next dosing event
+  }
+}
+  //dsPumpScheduling is used as scheduler for dosing pump array
+void dsPumpScheduling(){
+  if (dsPumpEventCounter ==0  && minuteInDay == minuteInDay/dsDivider*dsPumpEventCounter) {
+    dsPumpEventCounter++;
+    dsPumpEventFlag == true;
+    // dose pump active
+  }
+  else if (dsPumpEventCounter >0 && dsPumpEventCounter<dsDivider && minuteInDay == minuteInDay/dsDivider*dsPumpEventCounter) {
+    dsPumpEventCounter ++;
+    dsPumpEventFlag == true;
+    // dose pump active
+  }
+  else if(dsPumpEventCounter==dsDivider){
+    dsPumpEventCounter =0
+    //dose schedule daily reset
+  }
+}
+  //top up pump utility
+void topUpActivation(int status){
+  if(status == 1){
+    digitalWrite(tpPumpRlyPins, HIGH);
+  }
 }
