@@ -49,6 +49,13 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int dsDivider = 2 ; //dosing event divider 
   int dsPumpDuration[3]=[1,1,1]; //duration in program cycle
 
+  //light default value
+  int lightDutyTimings [4] = {5, 11, 15, 18}; //hour pointer when respective mode should active
+  int lightChannelStrength [4] = {200, 220, 256, 256}; //base light channel strength for the respective RGBW channel in PWM Resolution
+  int lightTimingStrengthMultiplier [4] = {40, 100, 70, 1}; //light channel strength multiplier in percentage
+  int lightDutyMode = 4;
+  int lightDutyStage = 0;
+
 //instrument flag
   //dosing pump
   bool dsPumpEventFlag = false;
@@ -210,9 +217,88 @@ void dsPumpScheduling(){
     //dose schedule daily reset
   }
 }
+  
   //top up pump utility
 void topUpActivation(int status){
   if(status == 1){
     digitalWrite(tpPumpRlyPins, HIGH);
   }
+}
+  
+  //light scheduling and timings utility
+    //light color intensity adjustment
+void colorIntensityAdjustment(int red, int green, int blue, int white){
+  lightChannelStrength = [red, green, blue, white];
+}
+  //light strength multiplier adjustment
+void lightStrengthAdjustment(int sunrise, int peak, int sunset, int night){
+  lightTimingStrengthMultiplier= {sunrise, peak, sunset, night};
+}
+    //light intensity calculator
+int intensityCalc(int strength, int multiplier, int lightDutyStages){
+  if (lightDutyStages == 1){
+    return ((strength/100)*multiplier)*0.75
+  }else if(lightDutyStages == 2){
+    return ((strength/100)*multiplier)*0.25
+  }
+}
+    //light timings scheduling
+void lightTimingsScheduling(int h, int m){
+  if( h >= lightDutyTimings[0] && h < lightDutyTimings[1]){ //sunrise
+  //sunrise had 2 stage
+    lightCoolingFanUtils(0.85);
+    lightDutyMode = 1;
+    lightDutyStage = 1;
+    //stage shifting
+    if (h >= lightDutyTimings[0]+1 && h<lightDutyTimings[1]){
+      //stage 2
+      lightDutyStage =2;
+    }
+  }else if (h >= lightDutyTimings[1] && h<lightDutyTimings[2]){ //peak
+  //peak only had 1 stage
+    lightCoolingFanUtils(1);
+    lightDutyMode = 2;
+    lightDutyStage = 1;
+  }else if(h >= lightDutyTimings[2] && h<lightDutyTimings[3]){ //sunset
+  //sunset had 2 stage, inverse of sunrise
+    lightCoolingFanUtils(0.8);
+    lightDutyMode = 3;
+    lightDutyStage = 2;
+    if (h >= lightDutyTimings[3]-1 && h < lightDutyTimings[3]){
+      //shift to second stage
+      lightDutyStage = 1;
+    }
+  }else if(h >= lightDutyTimings[3] && h != lightDutyTimings[0]){ //nighttime
+    lightCoolingFanUtils(0.5);
+    lightDutyMode = 4;
+    lightDutyStage = 1;
+  }else { //unexpected condition light goes off
+  lightCoolingFanUtils(0.5);
+    lightDutyMode = 4;
+    lightDutyStage = 1;
+  }
+}
+    //light activation utility 
+void lightTimingsUtils (){
+  int lightIntensity [4] = {
+    intensityCalc(lightChannelStrength[0], lightTimingsStrengthMultiplier[lightDutyMode-1], lightDutyStage), 
+    intensityCalc(lightChannelStrength[1], lightTimingsStrengthMultiplier[lightDutyMode-1],  lightDutyStage), 
+    intensityCalc(lightChannelStrength[2], lightTimingsStrengthMultiplier[lightDutyMode-1], lightDutyStage), 
+    intensityCalc(lightChannelStrength[3], lightTimingsStrengthMultiplier[lightDutyMode-1],  lightDutyStage)};
+  if(lightIntensity[0]>0){
+    digitalWrite(ledRedRlyPins, HIGH);
+  }else if (lightIntensity[0]==0){
+    digitalWrite(ledRedRlyPins, LOW);
+  }else if(lightIntensity[1]>0){
+    digitalWrite(ledGreenRlyPins, HIGH);
+  }else if (lightIntensity[1]==0){
+    digitalWrite(ledGreenRlyPins, LOW);
+  }
+  analogWrite(ledBlueMosfetsPins, lightIntensity[2]);
+  analogWrite(ledWhiteMosfetsPins, lightIntensity[3]);
+}
+    //light fan activation
+void lightCoolingFanUtils(int multiplier){
+  int baseResolution = 256;
+  analogWrite(ledFanMosfetsPins, baseResolution*multiplier);
 }
