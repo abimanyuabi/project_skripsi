@@ -1,6 +1,8 @@
 //library declaration
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <SPI.h>
+#include <SD.h>
 
 //declaration output pins
 int dsPumpRlyPins [3]={24, 25, 26}; // relays comps = 24 for alk, 25 for cal, 26 for mag 
@@ -26,6 +28,7 @@ int txPins = 1; //arduino transmit pin
 int rxPins = 2; //arduino receive pin
 uRTCLib rtc(0x68); //rtc i2c address 0x68
 
+
 //default value 
   //ph probe def val
   float defValProbeReading = 0.0;
@@ -47,7 +50,7 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int dsPumpEventCounter = 0; //dosing pump event counter
   int dsPumpFlowRate = 0.3; //flow rate is 0.3 per second
   int dsDivider = 2 ; //dosing event divider 
-  int dsPumpDuration[3]=[1,1,1]; //duration in program cycle
+  int dsPumpDuration[3]={1,1,1}; //duration in program cycle
 
   //light default value
   int lightDutyTimings [4] = {5, 11, 15, 18}; //hour pointer when respective mode should active
@@ -56,6 +59,9 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int lightDutyMode = 4;
   int lightDutyStage = 0;
 
+  //logging file
+  File loggingData;
+
 //instrument flag
   //dosing pump
   bool dsPumpEventFlag = false;
@@ -63,8 +69,8 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   int dsDoneAtSecond = 0;
   int dsSecondTracker = 0;
   bool dsDutyFlag = false; //indicate that dosing cycle is active
-  int dsPumpList[3] = [1,2,3] ;//indicate 3 channel dosing pump
-  bool dsDutyTracker[3] = [false, false, false] ;//indicate 3 dosing pump duty status
+  int dsPumpList[3] = {1,2,3} ;//indicate 3 channel dosing pump
+  bool dsDutyTracker[3] = {false, false, false} ;//indicate 3 dosing pump duty status
   int dsCurrentActive = 0; // indicate current active pump
   int dsProgramCycleTracker = 0 ;// count and track program cycle during active dosing cycle
   int dsCurrentEstimatedDuration = 0 ;//represent estimated maximum program cycle for dosing pump to complete task
@@ -94,10 +100,13 @@ void setup (){
   Serial.begin(9600);
   tempSensors.begin();
   URTCLIB_WIRE.begin();
+  SD.begin(sdCardReaderModule[0]);
   pinMode(dsPumpRlyPins[0], OUTPUT);
   pinMode(dsPumpRlyPins[1], OUTPUT);
   pinMode(dsPumpRlyPins[2], OUTPUT);
   pinMode(wtrLvlInputPin, INPUT);
+
+  loggingData = SD.open("data.json", FILE_WRITE);
 }
 void loop (){
   if(programCycle == 10){
