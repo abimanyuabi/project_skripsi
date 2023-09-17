@@ -65,6 +65,11 @@ uRTCLib rtc(0x68); //rtc i2c address 0x68
   File loggingData;
 
 //instrument flag
+  //network status
+  bool isNetPresent = false;
+  bool isDataRetrieved = false;
+  bool manualNetModeOverride = false;
+
   //dosing pump
   bool dsPumpEventFlag = false;
   int dsPumpChannelFlag = 0; //max 3, default 0
@@ -122,6 +127,36 @@ void loop (){
 }
 
 //-------------------------------------------------------------------------------------//
+//PROGRAM FLOW AND MODE
+//-------------------------------------------------------------------------------------//
+void isModeOffline(){
+  //open file, get latest configuration
+  int latestLedTimings [4] = {0, 0, 0, 0};
+  int latestLedStrength [4] = {0, 0, 0, 0};
+  int latestLedMultiplier [4] = {0, 0, 0, 0};
+  int latestWaveProfile [2] = {0, 0};
+  int latestDosingNeeded [3] = {0, 0, 0};
+  int latestDosingDivider = 0;
+}
+
+//-------------------------------------------------------------------------------------//
+//CALCULATION AND PARSING
+//-------------------------------------------------------------------------------------//
+
+  //dsPumpDurationCalc calculate how long the pump need to active for their respective liquid needed to dispense
+void dsPumpDurationCalc(){
+  int alkSolutionNeeded = alkSolutionConcentration*alkNeededInDkh;
+  int calSolutionNeeded = calSolutionConcentration*calNeededInPpm;
+  int magSolutionNeeded = magSolutionConcentration*magNeededInPpm;
+  int alkDuration = (alkSolutionNeeded/dsFlowRate)*10;
+  int calDuration = (calSolutionNeeded / dsFlowRate)*10;
+  int magDuration = (magSolutionNeeded / dsFlowRate) *10;
+  dsPumpDuration[0]=alkDuration;
+  dsPumpDuration[1]=calDuration;
+  dsPumpDuration[2]=magDuration;
+}
+
+//-------------------------------------------------------------------------------------//
 //INPUT/READING METHODS
 //-------------------------------------------------------------------------------------//
 void rtcTimeTracking(uRTCLib currentRtc){
@@ -175,18 +210,6 @@ float tpPumpUtils(){
 //-------------------------------------------------------------------------------------//
 
   //dosing pump task
-  //dsPumpDurationCalc calculate how long the pump need to active for their respective liquid needed to dispense
-void dsPumpDurationCalc(){
-  int alkSolutionNeeded = alkSolutionConcentration*alkNeededInDkh;
-  int calSolutionNeeded = calSolutionConcentration*calNeededInPpm;
-  int magSolutionNeeded = magSolutionConcentration*magNeededInPpm;
-  int alkDuration = (alkSolutionNeeded/dsFlowRate)*10;
-  int calDuration = (calSolutionNeeded / dsFlowRate)*10;
-  int magDuration = (magSolutionNeeded / dsFlowRate) *10;
-  dsPumpDuration[0]=alkDuration;
-  dsPumpDuration[1]=calDuration;
-  dsPumpDuration[2]=magDuration;
-}
   //dsPumpUtils used as dosing pump activation and duty cycle method, it called every program cycle
 void dsPumpUtils(){
   if (dsDutyFlag == true && dsCurrentActive == 0){ //ignitor condition and activation of first pump
