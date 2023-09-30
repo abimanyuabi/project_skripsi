@@ -1,10 +1,11 @@
 //library declaration
-#include "uRTCLib.h" //rtc
-#include <OneWire.h> //onewire serial comms
-#include <DallasTemperature.h> //dallas ds18b20 temp sensor
-#include "PCF8574.h" //GPIO expander
-#include <LiquidCrystal_I2C.h>
-
+  #include "uRTCLib.h" //rtc
+  #include <OneWire.h> //onewire serial comms
+  #include <DallasTemperature.h> //dallas ds18b20 temp sensor
+  #include "PCF8574.h" //GPIO expander
+  #include <LiquidCrystal_I2C.h>
+  #include <SPI.h>
+  #include <SD.h>
 
 //object declaration
   uRTCLib rtc(0x68); //rtc i2c address 0x68
@@ -13,7 +14,8 @@
 
 //status declaration
   bool wifiStatus = true;
-  bool sdCardStatus = false;
+  int sdCardStatus = 0;
+  bool firebaseStatus = false;
   bool offlineMode = true;
   bool isNewData = false;
   int deviceMode = 1;
@@ -21,14 +23,16 @@
 //program time tracker declaration
   unsigned long globalMillisTemp100ms = 0;
   unsigned long globalMillisTemp1s = 0;
-  unsigned long globalMillisTemp30s = 0;
-  unsigned long globalMillisTemp60s = 0;
   unsigned long globalMillisTrig100ms = 100;
   unsigned long globalMillisTrig1s = 1000;
-  unsigned long globalMillisTrig30s = 30000;
-  unsigned long globalMillisTrig60s = 60000;
   int minuteCounter = 0;
-
+//sd card parameters
+  File sensorFile;
+  File deviceProfileFile;
+  File setupFile;
+  const int chipSelect = 4;
+  bool sdRecordFlag = false;
+  bool isSdRecordDone = false;
 //sensor parameters declaration
   //top up parameters declaration
   int waterLevelSensorPin = 2;
@@ -83,7 +87,7 @@
 //wavemaker parameters declaration
   int wavePumpLeft = 4;
   int wavePumpRight = 7;
-  int waveMode = 3;
+  int waveMode = 3; //1 bi-linear, 2 symmetric, 3 assymetric
   int wavePumpCycle = 1;
   int wavePumpDutyDuration = 12;
   int wavePumpOffset = 2;
@@ -118,6 +122,12 @@ void setup() {
     temperatureSensor.begin(); 
     lcd.init();
     lcd.backlight();
+    //SD begin
+    if (!SD.begin(10)) {
+      sdCardStatus =0;
+    }else{
+      sdCardStatus = 1;
+    }
   
   // setup sensor pins
     pinMode(phSensorPin, INPUT);
@@ -142,6 +152,12 @@ void setup() {
   // setup return pump pin
     pinMode(returnPumpPin, OUTPUT);
 
+  // setup I/O panel pin
+    pinMode(feedingModeSwitchPin, INPUT);
+    pinMode(viewingModeSwitchPin, INPUT);
+    pinMode(symmetricWaveSwitchPin, INPUT);
+    pinMode(assymmetricWaveSwitchPin, INPUT);
+
   // setup panel i/o pins
     gpioExpander.pinMode(symmetricWaveSwitchPin, INPUT);
     gpioExpander.pinMode(assymmetricWaveSwitchPin, INPUT);
@@ -155,13 +171,16 @@ void loop() {
   //check serial comm for new data in serial buffer
     if(Serial.available()){
       char transCode = Serial.read();
-      if(transCode == 'z'){
+      if(transCode == 'z'){ //transCode z is for signalling arduino to prepare and receiving the transmitted device profile data from esp
         getDeviceProfileFromEsp();
       }
-      if(transCode = 'p'){
+      if(transCode = 'w'){
         wifiStatus = false;
       }else if(transCode == 'n'){
         wifiStatus = true;
+        firebaseStatus = true;
+      }else if(transCode == 'f'){
+        firebaseStatus = false;
       }
     }
   //timing and program cycle
@@ -185,18 +204,15 @@ void loop() {
       }
       //evaluate led state with current timings and strength final
       evaluateLedState(rtc.hour());
+      evaluatePanelState();
     }
-  //run every 30s for recording device profile and sensor data to sd card
-    if(millis() - globalMillisTemp30s == globalMillisTrig30s){ //process that run every 30s
-      globalMillisTemp30s = millis();
-
+  //run every 60s for sending sensor data to firebase rtdb
+    if(rtc.second() == 59 && wifiStatus == true){
+      sendSensorDataToEsp(rtc);
     }
-  // run every 60s for sending sensor data to firebase rtdb
-    if(millis() - globalMillisTemp60s == globalMillisTrig60s){
-      globalMillisTemp60s = millis();
-      if(wifiStatus == true){
-        sendSensorDataToEsp(rtc);
-      }
+  //run every 60m for recording device data to sd card
+    if (rtc.minute() == 59 && rtc.second() == 0 && sdCardStatus == 1){
+      sdRecordFlag = true;
     }
   //flag check
   //check if new data is true and evaluate the existing precalculated device profile data
@@ -220,273 +236,422 @@ void loop() {
   //scheduler
     //dosing scheduler
     dosingScheduler();
-  //evaluate device state
-    //evaluate dose pump profile every program cycle
+    //waveMakerScheduler
+    wavemakerScheduler();
+
+  //evaluate device
+    //evaluate dose state
     evaluateDoseState();
+    //evaluate sump fan state
+    evaluateSumpFanState(int(temperatureReading));
+
+    //evaluate lcd state
+    evaluateLcdState(rtc.hour(), rtc.minute());
+
+    //evaluate top up state
+    evaluateTopUpState();
+
+    //evaluate return pump state
+    evaluateReturnPumpState();
+
+    //evaluate sd pilot lamp state
+    evaluateSdPilotState(rtc);
 }
-void ledScheduler(){
-  for (int x = 0; x<16 ; x++){
+//scheduler
+  void ledScheduler(){
+    for (int x = 0; x<16 ; x++){
+      //sunrise
+      if(x>=0 && x<4){
+        ledFinalStrength[x] = ledBaseStrength[x] * float(ledTimingMultiplier[0]/100.0);
+      }
+      //peak
+      if(x>=4 && x<8){
+        ledFinalStrength[x] = ledBaseStrength[x-4] * float(ledTimingMultiplier[1]/100.0);
+      }
+      //sunset
+      if(x>=8 && x<12){
+        ledFinalStrength[x] = ledBaseStrength[x-8] * float(ledTimingMultiplier[2]/100.0);
+      }
+      //night
+      if(x>=12 && x<16){
+        ledFinalStrength[x] = ledBaseStrength[x-8] * float(ledTimingMultiplier[3]/100.0);
+      }
+    }
+  }
+  void wavemakerScheduler(){
+    if(deviceMode == 3){
+      digitalWrite(wavePumpLeft, HIGH);
+      digitalWrite(wavePumpRight, HIGH);
+    }else{
+      //bi-linear wave
+      if(waveMode == 1){
+        digitalWrite(wavePumpLeft, HIGH);
+        digitalWrite(wavePumpRight, HIGH);
+      }
+      //symmetrical wave
+      else if (waveMode == 2){
+        if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/2){
+          digitalWrite(wavePumpLeft, HIGH);
+          digitalWrite(wavePumpRight, LOW);
+        }else if(wavePumpCycle > wavePumpDutyDuration/2 && wavePumpCycle <= wavePumpDutyDuration){
+          digitalWrite(wavePumpLeft, LOW);
+          digitalWrite(wavePumpRight, HIGH);
+          if(wavePumpCycle == wavePumpDutyDuration){
+            wavePumpCycle = 1;
+          }
+        }
+      }
+      //assymmetrical wave
+      else if (waveMode == 3){
+        if(minuteCounter % 2 == 0){
+          if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/3 + wavePumpOffset ){
+            digitalWrite(wavePumpLeft, HIGH);
+            digitalWrite(wavePumpRight, LOW);
+          }else if(wavePumpCycle > wavePumpDutyDuration/3 && wavePumpCycle <= wavePumpDutyDuration){
+            digitalWrite(wavePumpLeft, LOW);
+            digitalWrite(wavePumpRight, HIGH);
+            if(wavePumpCycle == wavePumpDutyDuration){
+              wavePumpCycle = 1;
+            }
+          }
+        }else{
+          if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/3 + wavePumpOffset ){
+            digitalWrite(wavePumpLeft, LOW);
+            digitalWrite(wavePumpRight, HIGH);
+          }else if(wavePumpCycle > wavePumpDutyDuration/3 && wavePumpCycle <= wavePumpDutyDuration){
+            digitalWrite(wavePumpLeft, HIGH);
+            digitalWrite(wavePumpRight, LOW);
+            if(wavePumpCycle == wavePumpDutyDuration){
+              wavePumpCycle = 1;
+            }
+          }
+        }
+      }
+    }
+  }
+  void dosingScheduler(){
+    if(minuteCounter == 0){
+      doseCounter = doseCounter+1;
+      doseEventFlag = 1;
+    }else if(minuteCounter == 5){
+      doseEventFlag = 2;
+    }else if(minuteCounter == 10){
+      doseEventFlag = 3;
+    }
+    if(minuteCounter - doseMinuteTemp == doseInterval){
+      doseCounter = doseCounter+1;
+      doseEventFlag = 1;
+    }else if(minuteCounter - (doseMinuteTemp + doseOffset) == doseInterval){
+      doseEventFlag = 2;
+    }else if(minuteCounter - (doseMinuteTemp + (doseOffset*2)) == doseInterval){
+      doseEventFlag = 3;
+      doseMinuteTemp = minuteCounter - (doseOffset*2);
+    }
+  }
+
+//calculator & data parser
+  void dosingCalculator(){
+    doseInterval = 1440 / doseDivider;
+    float floatDoseDivider = doseDivider / 1.0;
+    for(int z = 0; z<3; z++){
+      int neededVol = (float(doseNeeded[z] / doseResolution[z]) * 100.0)/floatDoseDivider;
+      doseTriggerDuration[z] = (neededVol / dosePumpSpeed) * 1000.0;
+    }
+  }
+
+//evaluate device state
+  void evaluateLedState(int currentHour){
     //sunrise
-    if(x>=0 && x<4){
-      ledFinalStrength[x] = ledBaseStrength[x] * float(ledTimingMultiplier[0]/100.0);
+    if(currentHour >= ledTimings[0] && currentHour < ledTimings[1]){
+      ledStateFlag = 1;
+      digitalWrite(ledFanPin, HIGH);
+      analogWrite(ledPins[0], ledFinalStrength[0]);
+      analogWrite(ledPins[1], ledFinalStrength[1]);
+      analogWrite(ledPins[2], ledFinalStrength[2]);
+      analogWrite(ledPins[3], ledFinalStrength[3]);
     }
     //peak
-    if(x>=4 && x<8){
-      ledFinalStrength[x] = ledBaseStrength[x-4] * float(ledTimingMultiplier[1]/100.0);
+    else if(currentHour >= ledTimings[1] && currentHour < ledTimings[2]){
+      ledStateFlag = 2;
+      digitalWrite(ledFanPin, HIGH);
+      analogWrite(ledPins[0], ledFinalStrength[4]);
+      analogWrite(ledPins[1], ledFinalStrength[5]);
+      analogWrite(ledPins[2], ledFinalStrength[6]);
+      analogWrite(ledPins[3], ledFinalStrength[7]);
     }
     //sunset
-    if(x>=8 && x<12){
-      ledFinalStrength[x] = ledBaseStrength[x-8] * float(ledTimingMultiplier[2]/100.0);
+    else if(currentHour >= ledTimings[2] && currentHour < ledTimings[3]){
+      ledStateFlag = 3;
+      digitalWrite(ledFanPin, HIGH);
+      analogWrite(ledPins[0], ledFinalStrength[8]);
+      analogWrite(ledPins[1], ledFinalStrength[9]);
+      analogWrite(ledPins[2], ledFinalStrength[10]);
+      analogWrite(ledPins[3], ledFinalStrength[11]);
     }
     //night
-    if(x>=12 && x<16){
-      ledFinalStrength[x] = ledBaseStrength[x-8] * float(ledTimingMultiplier[3]/100.0);
+    else if(currentHour >= ledTimings[4] || currentHour < ledTimings[0]){
+      ledStateFlag = 0;
+      digitalWrite(ledFanPin, LOW);
+      analogWrite(ledPins[0], ledFinalStrength[12]);
+      analogWrite(ledPins[1], ledFinalStrength[13]);
+      analogWrite(ledPins[2], ledFinalStrength[14]);
+      analogWrite(ledPins[3], ledFinalStrength[15]);
     }
   }
-}
-void evaluateLedState(int currentHour){
-  //sunrise
-  if(currentHour >= ledTimings[0] && currentHour < ledTimings[1]){
-    ledStateFlag = 1;
-    digitalWrite(ledFanPin, HIGH);
-    analogWrite(ledPins[0], ledFinalStrength[0]);
-    analogWrite(ledPins[1], ledFinalStrength[1]);
-    analogWrite(ledPins[2], ledFinalStrength[2]);
-    analogWrite(ledPins[3], ledFinalStrength[3]);
-  }
-  //peak
-  else if(currentHour >= ledTimings[1] && currentHour < ledTimings[2]){
-    ledStateFlag = 2;
-    digitalWrite(ledFanPin, HIGH);
-    analogWrite(ledPins[0], ledFinalStrength[4]);
-    analogWrite(ledPins[1], ledFinalStrength[5]);
-    analogWrite(ledPins[2], ledFinalStrength[6]);
-    analogWrite(ledPins[3], ledFinalStrength[7]);
-  }
-  //sunset
-  else if(currentHour >= ledTimings[2] && currentHour < ledTimings[3]){
-    ledStateFlag = 3;
-    digitalWrite(ledFanPin, HIGH);
-    analogWrite(ledPins[0], ledFinalStrength[8]);
-    analogWrite(ledPins[1], ledFinalStrength[9]);
-    analogWrite(ledPins[2], ledFinalStrength[10]);
-    analogWrite(ledPins[3], ledFinalStrength[11]);
-  }
-  //night
-  else if(currentHour >= ledTimings[4] || currentHour < ledTimings[0]){
-    ledStateFlag = 0;
-    digitalWrite(ledFanPin, LOW);
-    analogWrite(ledPins[0], ledFinalStrength[12]);
-    analogWrite(ledPins[1], ledFinalStrength[13]);
-    analogWrite(ledPins[2], ledFinalStrength[14]);
-    analogWrite(ledPins[3], ledFinalStrength[15]);
-  }
-}
-void dosingCalculator(){
-  doseInterval = 1440 / doseDivider;
-  float floatDoseDivider = doseDivider / 1.0;
-  for(int z = 0; z<3; z++){
-    int neededVol = (float(doseNeeded[z] / doseResolution[z]) * 100.0)/floatDoseDivider;
-    doseTriggerDuration[z] = (neededVol / dosePumpSpeed) * 1000.0;
-  }
-}
-void dosingScheduler(){
-  if(minuteCounter == 0){
-    doseCounter = doseCounter+1;
-    doseEventFlag = 1;
-  }else if(minuteCounter == 5){
-    doseEventFlag = 2;
-  }else if(minuteCounter == 10){
-    doseEventFlag = 3;
-  }
-  if(minuteCounter - doseMinuteTemp == doseInterval){
-    doseCounter = doseCounter+1;
-    doseEventFlag = 1;
-  }else if(minuteCounter - (doseMinuteTemp + doseOffset) == doseInterval){
-    doseEventFlag = 2;
-  }else if(minuteCounter - (doseMinuteTemp + (doseOffset*2)) == doseInterval){
-    doseEventFlag = 3;
-    doseMinuteTemp = minuteCounter - (doseOffset*2);
-  }
-}
-void evaluateDoseState(){
-  if(doseEventFlag > 0){
-    //sync the doseMillisTemp with current millis to start counting pump duration
-    if(isDoseMillisSync == false){ //in the beginnig dose millis is not synced with current millis, it needs to be synced when dose event flag occur
-      doseMillisTemp = millis();
-      isDoseMillisSync == true ;//when synced reassign dosemillis sync to true
-    }else if(isDoseMillisSync == true){ // when true pump activated for pre-determined duration 
-      digitalWrite(dosePumpPins[doseEventFlag-1], HIGH);//activate pump pin to high
-      //evaluate the dose channel state
-      if(millis() - doseMillisTemp == doseTriggerDuration[doseEventFlag-1]){ // when dose event has elapsed for the pre-deternmined duration, the pump de-activate and all event flag & time tracking dispelled & resetted
-        digitalWrite(dosePumpPins[doseEventFlag-1], LOW);
-        doseMillisTemp = 0;
-        isDoseMillisSync = false;
-        doseEventFlag = 0;
-        doseCounter = doseCounter +1;
-      }
-    }
-    
-  }
-}
-void evaluateTopUpState(){
-  if(isTopUp == true){
-    digitalWrite(topUpPumpPin, HIGH);
-    isTopUpDone = true;
-
-  }else if(isTopUp == false && isTopUpDone == true){
-    digitalWrite(topUpPumpPin, LOW);
-    isTopUpDone = false;
-    topUpCount = topUpCount+1;
-  }
-}
-void wavemakerScheduler(int waveMode, int deviceMode){
-  //bi-linear wave
-  if(waveMode == 1){
-    digitalWrite(wavePumpLeft, HIGH);
-    digitalWrite(wavePumpRight, HIGH);
-  }
-  //symmetrical wave
-  else if (waveMode == 2){
-    if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/2){
-      digitalWrite(wavePumpLeft, HIGH);
-      digitalWrite(wavePumpRight, LOW);
-    }else if(wavePumpCycle > wavePumpDutyDuration/2 && wavePumpCycle <= wavePumpDutyDuration){
-      digitalWrite(wavePumpLeft, LOW);
-      digitalWrite(wavePumpRight, HIGH);
-      if(wavePumpCycle == wavePumpDutyDuration){
-        wavePumpCycle = 1;
-      }
-    }
-  }
-  //assymmetrical wave
-  else if (waveMode == 3){
-    if(minuteCounter % 2 == 0){
-      if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/3 + wavePumpOffset ){
-        digitalWrite(wavePumpLeft, HIGH);
-        digitalWrite(wavePumpRight, LOW);
-      }else if(wavePumpCycle > wavePumpDutyDuration/3 && wavePumpCycle <= wavePumpDutyDuration){
-        digitalWrite(wavePumpLeft, LOW);
-        digitalWrite(wavePumpRight, HIGH);
-        if(wavePumpCycle == wavePumpDutyDuration){
-          wavePumpCycle = 1;
+  void evaluateDoseState(){
+    if(doseEventFlag > 0){
+      //sync the doseMillisTemp with current millis to start counting pump duration
+      if(isDoseMillisSync == false){ //in the beginnig dose millis is not synced with current millis, it needs to be synced when dose event flag occur
+        doseMillisTemp = millis();
+        isDoseMillisSync == true ;//when synced reassign dosemillis sync to true
+      }else if(isDoseMillisSync == true){ // when true pump activated for pre-determined duration 
+        digitalWrite(dosePumpPins[doseEventFlag-1], HIGH);//activate pump pin to high
+        //evaluate the dose channel state
+        if(millis() - doseMillisTemp == doseTriggerDuration[doseEventFlag-1]){ // when dose event has elapsed for the pre-deternmined duration, the pump de-activate and all event flag & time tracking dispelled & resetted
+          digitalWrite(dosePumpPins[doseEventFlag-1], LOW);
+          doseMillisTemp = 0;
+          isDoseMillisSync = false;
+          doseEventFlag = 0;
+          doseCounter = doseCounter +1;
         }
       }
+      
+    }
+  }
+  void evaluateTopUpState(){
+    if(isTopUp == true){
+      digitalWrite(topUpPumpPin, HIGH);
+      isTopUpDone = true;
+
+    }else if(isTopUp == false && isTopUpDone == true){
+      digitalWrite(topUpPumpPin, LOW);
+      isTopUpDone = false;
+      topUpCount = topUpCount+1;
+    }
+  }
+  void evaluateSumpFanState(int temperature){
+    if(temperature > 26){
+      digitalWrite(sumpFanPin, HIGH);
     }else{
-      if (wavePumpCycle>0 && wavePumpCycle <= wavePumpDutyDuration/3 + wavePumpOffset ){
-        digitalWrite(wavePumpLeft, LOW);
-        digitalWrite(wavePumpRight, HIGH);
-      }else if(wavePumpCycle > wavePumpDutyDuration/3 && wavePumpCycle <= wavePumpDutyDuration){
-        digitalWrite(wavePumpLeft, HIGH);
-        digitalWrite(wavePumpRight, LOW);
-        if(wavePumpCycle == wavePumpDutyDuration){
-          wavePumpCycle = 1;
-        }
+      digitalWrite(sumpFanPin, LOW);
+    }
+  }
+  void evaluateLcdState(int hour, int minute){
+    //display time
+    lcd.setCursor(0, 0);
+    lcd.print("T:");
+    lcd.setCursor(3, 0);
+    lcd.print(hour);
+    lcd.setCursor(5, 0);
+    lcd.print(minute);
+    //display wavemode
+    lcd.setCursor(7, 0);
+    lcd.print(" WF:");
+    if(waveMode == 1){
+      lcd.setCursor(10, 0);
+      lcd.print("Lin--");
+    }else if(waveMode == 2){
+      lcd.setCursor(10, 0);
+      lcd.print("Sym^");
+    }else if(waveMode == 3){
+      lcd.setCursor(10, 0);
+      lcd.print("Asy^v");
+    }
+    //display dose state
+    lcd.setCursor(0, 1);
+    lcd.print("dose:"+String(doseDivider)+"A"+String(doseNeeded[0])+"C"+String(doseNeeded[1])+"M"+String(doseNeeded[2]));
+
+  }
+  void evaluateReturnPumpState(){
+    if(deviceMode == 3){
+      digitalWrite(returnPumpPin, LOW);
+    }else{
+      digitalWrite(returnPumpPin, HIGH);
+    }
+  }
+  void evaluatePanelState(){
+    bool feedState = false;
+    bool viewingState = false;
+    bool symmetricalState = false;
+    bool assymmetricalState = false;
+
+    feedState = digitalRead(feedingModeSwitchPin);
+    viewingState = digitalRead(viewingModeSwitchPin);
+    symmetricalState = digitalRead(symmetricWaveSwitchPin);
+    assymmetricalState = digitalRead(assymmetricWaveSwitchPin);
+
+    //check the device mode
+    if(feedState == true){
+      deviceMode = 3;
+    }else if(viewingState == true){
+      deviceMode = 2;
+    }else{
+      deviceMode = 1;
+    }
+    //check waveMode
+    if(symmetricalState == true){
+      deviceMode = 2;
+    }else if(assymmetricalState == true){
+      deviceMode = 3;
+    }else{
+      deviceMode = 1;
+    }
+  }
+  void evaluateSdPilotState(uRTCLib rtcd){
+    if(sdCardStatus == 0){
+      digitalWrite(sdPilotLampPin, LOW);
+    }else if(sdCardStatus == 1){
+      digitalWrite(sdPilotLampPin, HIGH);
+    }else if(sdCardStatus == 3){
+      if(rtcd.second()%3==0){
+        digitalWrite(sdPilotLampPin, LOW);
+      }else{
+        digitalWrite(sdPilotLampPin, HIGH);
       }
     }
   }
-}
-void evaluateSumpFanState(int temperature){
-  if(temperature > 26){
-    digitalWrite(sumpFanPin, HIGH);
-  }else{
-    digitalWrite(sumpFanPin, LOW);
-  }
-}
-void evaluateLcdState(int temperature, int hour, int minute){
-  //display time
-  lcd.setCursor(0, 0);
-  lcd.print("T:");
-  lcd.setCursor(3, 0);
-  lcd.print(hour);
-  lcd.setCursor(5, 0);
-  lcd.print(minute);
-  //display wavemode
-  lcd.setCursor(7, 0);
-  lcd.print(" WF:");
-  if(waveMode == 1){
-    lcd.setCursor(10, 0);
-    lcd.print("Lin--");
-  }else if(waveMode == 2){
-    lcd.setCursor(10, 0);
-    lcd.print("Sym^");
-  }else if(waveMode == 3){
-    lcd.setCursor(10, 0);
-    lcd.print("Asy^v");
-  }
-  //display led mode
-  lcd.setCursor(0, 1);
-  lcd.print("LS:");
-  if(ledStateFlag == 0){
-    lcd.setCursor(3, 1);
-    lcd.print("NT");
-  }else if(ledStateFlag == 1){
-    lcd.setCursor(3, 1);
-    lcd.print("SE");
-  }else if(ledStateFlag == 2){
-    lcd.setCursor(3, 1);
-    lcd.print("PK");
-  }else if(ledStateFlag == 3){
-    lcd.setCursor(3, 1);
-    lcd.print("ST");
-  }
-  //display dose state
-  lcd.setCursor(6, 1);
-  lcd.print("dsDiv"+String(doseDivider)+"");
 
-}
-void sensorSampling(){
-  // ph read
-  int phAdcRead=0;
-  for (int i = 0; i < phSamplingCount; i++){
-    phAdcRead += analogRead(phSensorPin);
-  }
-  float avgPhVoltage = 5 / adcResolution * phAdcRead/phSamplingCount;
-  phReading = 7.0 + ((2.5 - avgPhVoltage) / 0.18);
-
-  //temp read
-  temperatureSensor.requestTemperatures();
-  temperatureReading = temperatureSensor.getTempCByIndex(0); //in celcius
-
-  //water level pins
-  isTopUp = bool(digitalRead(waterLevelSensorPin));
-}
-void getDeviceProfileFromEsp(){
-  // Read the incoming data and populate the array
-  for (int i = 0; i < 18; i++) {
-    int retrievedData = Serial.parseInt();
-    if(i>=0 && i<=3 && retrievedData>=0){
-      ledTimings[i]=retrievedData;
-    }else if (i>= 4 && i<= 7 && retrievedData>=0){
-      ledTimingMultiplier[i-4] = retrievedData;
-    }else if (i>= 8 && i<= 11 && retrievedData>=0){
-      ledBaseStrength[i-8] = retrievedData;
-    }else if (i>=12 && i<=14 && retrievedData>=0){
-      doseNeeded[i-12] = retrievedData;
-    }else if(i == 15 && retrievedData>=0){
-      doseDivider = retrievedData;
-    }else if(i == 16 && retrievedData>=0){
-      deviceMode = retrievedData;
-    }else if(i == 17 && retrievedData>=0){
-      waveMode = retrievedData;
+//sensor utils
+  void sensorSampling(){
+    // ph read
+    int phAdcRead=0;
+    for (int i = 0; i < phSamplingCount; i++){
+      phAdcRead += analogRead(phSensorPin);
     }
-    Serial.read(); // Read the comma separator
+    float avgPhVoltage = 5 / adcResolution * phAdcRead/phSamplingCount;
+    phReading = 7.0 + ((2.5 - avgPhVoltage) / 0.18);
+
+    //temp read
+    temperatureSensor.requestTemperatures();
+    temperatureReading = temperatureSensor.getTempCByIndex(0); //in celcius
+
+    //water level pins
+    isTopUp = bool(digitalRead(waterLevelSensorPin));
   }
-  isNewData = true;
-}
-void sendSensorDataToEsp(uRTCLib rtcs){
-  int phValue = phReading*100;
-  int waterTempValue = temperatureReading*100;
-  int salinityValue = 1025; //placeholder, salinity readings is still in test
-  int topUpWaterUsage = topUpCount * waterLoss;
-  int sensorArrayData [8]{rtcs.day(), rtcs.hour(), rtcs.minute(), rtcs.second(), phValue, waterTempValue, salinityValue, topUpWaterUsage};
-  pingEsp('b');
-  for (int i = 0; i < 8; i++) {
-    Serial.print(sensorArrayData[i]); // Send the array element
-    Serial.print(","); // Send a comma as a separator
+
+//data transmission
+  //sd card r/w
+  void recordDeviceSdCard(){
+    if (sdRecordFlag == true && isSdRecordDone == false){
+      //record data
+      SD.remove("devprof.txt");
+      deviceProfileFile = SD.open("devprof.txt", FILE_WRITE);
+      if (deviceProfileFile) {
+        sdCardStatus = 1;
+        // Write the array elements to the file
+        for (int i = 0; i < 18; i++) {
+          if(i>=0 && i<=3){
+            deviceProfileFile.print(ledTimings[i]);
+          }else if (i>= 4 && i<= 7){
+            deviceProfileFile.print(ledTimingMultiplier[i-4]);
+          }else if (i>= 8 && i<= 11){
+            deviceProfileFile.print(ledBaseStrength[i-8]);
+          }else if (i>=12 && i<=14){
+            deviceProfileFile.print(doseNeeded[i-12]);
+          }else if(i == 15){
+            deviceProfileFile.print(doseDivider);
+          }else if(i == 16){
+            deviceProfileFile.print(deviceMode);
+          }else if(i == 17){
+            deviceProfileFile.print(waveMode);
+          }
+          // separator
+          if (i < 18 - 1) {
+            deviceProfileFile.print(","); // Add a comma between values
+          }
+        }
+        deviceProfileFile.close();
+      } else {
+        Serial.println(sdCardStatus = 3); // fail to write
+      }
+      //when done 
+      //re-assign sd record flag to false, indicating the data recording is done
+      sdRecordFlag = false;
+      //re-assign is sd record done to true, indicating the new received data has been recorded to sd card
+      isSdRecordDone = true;
+    }
   }
-  Serial.println();
-}
-void pingEsp(char transCode){
-  Serial.println(transCode);
-}
+  void getDeviceSdCard(){
+    int arraySize = 18;
+    deviceProfileFile = SD.open("devprof.txt");
+
+    if (deviceProfileFile) {
+      String data = deviceProfileFile.readStringUntil('\n');
+      deviceProfileFile.close();
+
+      // Parse the string into an array
+      int dataArray[arraySize];
+      int index = 0;
+      char* token = strtok(const_cast<char*>(data.c_str()), ",");
+      while (token != NULL) {
+        dataArray[index] = atoi(token);
+        index++;
+        token = strtok(NULL, ",");
+      }
+
+      // re-assign the array with new value
+      for (int i = 0; i < arraySize; i++) {
+        int retrievedData = dataArray[i];
+        if(i>=0 && i<=3 && retrievedData>=0){
+          ledTimings[i]=retrievedData;
+        }else if (i>= 4 && i<= 7 && retrievedData>=0){
+          ledTimingMultiplier[i-4] = retrievedData;
+        }else if (i>= 8 && i<= 11 && retrievedData>=0){
+          ledBaseStrength[i-8] = retrievedData;
+        }else if (i>=12 && i<=14 && retrievedData>=0){
+          doseNeeded[i-12] = retrievedData;
+        }else if(i == 15 && retrievedData>=0){
+          doseDivider = retrievedData;
+        }else if(i == 16 && retrievedData>=0){
+          deviceMode = retrievedData;
+        }else if(i == 17 && retrievedData>=0){
+          waveMode = retrievedData;
+        }
+      }
+    } else {
+      sdCardStatus = 3;
+    }
+  }
+  //firebase r/w through esp
+  void getDeviceProfileFromEsp(){
+    // Read the incoming data and populate the array
+    for (int i = 0; i < 18; i++) {
+      int retrievedData = Serial.parseInt();
+      if(i>=0 && i<=3 && retrievedData>=0){
+        ledTimings[i]=retrievedData;
+      }else if (i>= 4 && i<= 7 && retrievedData>=0){
+        ledTimingMultiplier[i-4] = retrievedData;
+      }else if (i>= 8 && i<= 11 && retrievedData>=0){
+        ledBaseStrength[i-8] = retrievedData;
+      }else if (i>=12 && i<=14 && retrievedData>=0){
+        doseNeeded[i-12] = retrievedData;
+      }else if(i == 15 && retrievedData>=0){
+        doseDivider = retrievedData;
+      }else if(i == 16 && retrievedData>=0){
+        deviceMode = retrievedData;
+      }else if(i == 17 && retrievedData>=0){
+        waveMode = retrievedData;
+      }
+      Serial.read(); // Read the comma separator
+    }
+    //re-assign is new data to true indicating there's new device profile data from firebase
+    isNewData = true;
+    //re-assign is sd record done to false, indicating there's new data to write in sd card
+    isSdRecordDone = false;
+  }
+  void sendSensorDataToEsp(uRTCLib rtcs){
+    int phValue = phReading*100;
+    int waterTempValue = temperatureReading*100;
+    int salinityValue = 1025; //placeholder, salinity readings is still in test
+    int topUpWaterUsage = topUpCount * waterLoss;
+    int sensorArrayData [8]{rtcs.day(), rtcs.hour(), rtcs.minute(), rtcs.second(), phValue, waterTempValue, salinityValue, topUpWaterUsage};
+    pingEsp('b');
+    for (int i = 0; i < 8; i++) {
+      Serial.print(sensorArrayData[i]); // Send the array element
+      Serial.print(","); // Send a comma as a separator
+    }
+    Serial.println();
+  }
+  void pingEsp(char transCode){
+    Serial.println(transCode);
+  }
