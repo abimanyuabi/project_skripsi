@@ -4,6 +4,10 @@
 #include "addons/TokenHelper.h"
 #include<string>
 
+//program timings
+unsigned long millisTemp = 0;
+unsigned long millisTrigg = 1000;
+
 // declaration of wifi connection parameters
 String wifiSSID = "Kiran2";
 String wifiPassword = "Spectrum";
@@ -21,6 +25,7 @@ bool signupStatus = false;
 String firebaseErrorMsg = "";
 
 #define netPilotLamp D0
+bool calledOnce = true;
 
 void setup() {
   // put your setup code here, to run once:
@@ -40,12 +45,11 @@ void setup() {
 
   //wifi setup try once to connect
   WiFi.begin(wifiSSID, wifiPassword);
-  delay(100);
-
   //check the wifi and try to connect to firebase
   if(WiFi.status()!=WL_CONNECTED){
     //fail to connect to network, proceed on offline mode and retry on program cycle
     //do nothing
+    Serial.print("fail to wifi");
   }else{
     //Success connected to wifi
     wifiStatus = true;
@@ -66,6 +70,13 @@ void setup() {
 }
 
 void loop() {
+  unsigned long currMillis = millis();
+  if(wifiStatus == false){
+    networkReconnect();
+  }else if(wifiStatus == true && signupStatus == false){
+    firebaseReconnect();
+  }
+  
   // put your main code here, to run repeatedly:
   if(Serial.available()){
     char transCode = '-';
@@ -79,17 +90,100 @@ void loop() {
         pingArduino('w');
       }
     }else if(transCode == 'b'){
-
+      getSensorArrayFromArduino();
     }
   }
+  // run every 1 second to ping firebase is there new data on firebase devprof
+  if(currMillis - millisTemp > millisTrigg){
+    millisTemp = currMillis;
+    if(pingFirebase() == true){
+      fetchNewDeviceData();
+    }
+  }
+}
 
+void networkReconnect(){
+  ledBlink();
+  WiFi.begin(wifiSSID, wifiPassword);
+  delay(100);
+  while(WiFi.status()!=WL_CONNECTED){
+    ledBlink();
+  }
+  delay(100);
+  //connection is good
+  wifiStatus = true;
+}
+bool checkNetwork(){
+  return (WiFi.status()!=WL_CONNECTED)?false:true;
+}
+void firebaseReconnect(){
+  //trying to reconnect firebase
+  ledBlink();
+  //double check
+  if(checkNetwork() == 0){
+    //not connected to network
+    wifiStatus = false;
+  }else{
+    wifiStatus = true;
+    //wifi good, try to reconnect to firebase
+    config.token_status_callback = tokenStatusCallback;
+    Firebase.reconnectWiFi(true);
+    Firebase.begin(&config, &fbsAuth);
+    
+    if(Firebase.ready()){
+      //signup ok
+      signupStatus = true;
+      Serial.println("ready");
+    }else{
+      firebaseErrorMsg = config.signer.signupError.message.c_str();
+    }
+  }
+}
+void fetchNewDeviceData(){
+  int arrBuffer [18];
+  for(int x = 0; x<18;x++){
+    int tempVals = getIntData("devprof/"+String(x));
+    if(tempVals>=0){
+      arrBuffer[x] = tempVals;
+    }
+  }
+  recordBoolData("devprof/isNewData", false);
+  pingArduino('z');
+  for(int y = 0; y<18; y++){
+    Serial.print(arrBuffer[y]); // Send the array element
+    Serial.print(","); // Send a comma as a separator
+  }
+  Serial.println();
+
+}
+bool recordBoolData(String entityPath, bool entityData){
+  bool isSuccess = false;
+  if(Firebase.ready()){
+    if(Firebase.RTDB.setBool(&fbsData, ("aquariums_data/"+ entityPath), entityData)){
+      ledBlink();
+      isSuccess = true;
+    }
+  }
+  return isSuccess;
+}
+int getIntData(String entityPath){
+  int tempVal = -1;
+  if(Firebase.ready()){
+    if(Firebase.RTDB.getInt(&fbsData, ("aquariums_data/"+entityPath))){
+        ledBlink();
+        tempVal = fbsData.to<int>();
+      }
+    }
+  return tempVal;
 }
 bool getSensorArrayFromArduino(){
   // Read the incoming data and populate the array
-  bool recordStatus = false;
-    for (int i = 0; i < 8; i++) {
+  bool recordStatus = true;
+  for (int i = 0; i < 8; i++) {
       int data = Serial.parseInt(); // Read and convert to integer
-      recordStatus = recordIntData("sensor/"+String(i), data);
+      if(recordIntData("sensor/"+String(i), data) == false){
+        recordStatus = false;
+      }
       Serial.read(); // Read the comma separator
     }
   return recordStatus;
@@ -104,11 +198,13 @@ bool recordIntData(String entityPath, int entityValue){
         //success saving to db
         isRecordDataSuccess = true;
       }else{
+        Serial.println("Failed saving data cuz : " + fbsData.errorReason());
         //Failed saving data
         isRecordDataSuccess = false;
       }
     }else{
       //firebase not ready
+      Serial.print("firebase not ready");
       isRecordDataSuccess = false;
     }
   }else{
@@ -122,8 +218,18 @@ void pingArduino(char transCode){
   Serial.println(transCode);
 }
 bool pingFirebase(){
-  bool rtData = false;
-  return rtData;
+  bool fireStat = false;
+  Serial.println("ping");
+  if(Firebase.ready()){
+    if(Firebase.RTDB.getBool(&fbsData, "aquariums_data/devprof/isNewData")){
+      ledBlink();
+      fireStat = fbsData.to<bool>();
+    }
+  }
+  else{
+    fireStat =  false;
+  }
+  return fireStat;
 }
 void ledBlink(){
   digitalWrite(LED_BUILTIN, LOW);

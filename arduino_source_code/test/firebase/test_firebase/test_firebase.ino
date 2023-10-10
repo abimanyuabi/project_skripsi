@@ -15,7 +15,7 @@ int programCycle = 0;
 bool signupStatus = false;
 
 int firebaseOpFlag = 1; //1 for upload new sensor data, 2 for upload new device info data, 3 for fetch new device profile data, 4 for fetch sensor/calibration data
-int sensorArrayData[11] = {1, 15, 11, 39, 24, 8, 5, 29, 2, 1025, 10};
+int sensorArrayData[11] = {1, 15, 11, 39, 24, 8, 5, 29, 2, 1025, 20};
 int retrievedSensorArray[11]={1,1,1,1,1,1,1,1,1,1,1};
 
 void setup() {
@@ -70,8 +70,6 @@ void recordSensorData(){
     recordIntData("sensor/"+ String(i), sensorArrayData[i]);
   }
 }
-
-record
 
 int getIntData(String entityPath){
   int tempVal = 0;

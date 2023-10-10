@@ -31,19 +31,16 @@ bool sensorFetchDataStatus [11] = {false, false, false, false, false, false, fal
   //device profile
 bool deviceProfileRecordFlag = false;
 bool deviceProfileFetchFlag = false;
-bool deviceProfileRecordDataStatus [23] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 bool deviceProfileIncomingDataStatus [23] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
-int deviceProfileArrayDataTemporary [23] = {3, 20, 19, 35, 45, 5, 11, 15, 6, 20, 98, 75, 1, 200, 200, 255, 255, 1, 20, 30, 15, 1, 3};
-int deviceProfileArrayDataIncoming [23] = {3, 15, 19, 35, 45, 5, 11, 15, 6, 20, 98, 75, 1, 255, 255, 255, 255, 1, 20, 30, 15, 1, 3};
+int deviceProfileArrayData [23] = {3, 15, 19, 35, 45, 5, 11, 15, 6, 20, 98, 75, 1, 255, 255, 255, 255, 1, 20, 30, 15, 1, 3};
 
 //serial comm flag 
 bool sendSensorDataToArduinoFlag = false;
 bool sendDeviceProfileDataToArduinoFlag = false;
 
 //declaration of program cycle tracking parameters
-unsigned long milis;
-unsigned long milisTemp;
-unsigned long milisTrigg = 1000;
+unsigned long millisTemp = 0;
+unsigned long millisTrigg = 1000;
 int programCycle = 0;
 
 //declaration of GPIO pins
@@ -93,50 +90,42 @@ void setup() {
 }
 
 void loop() {
-  milis = millis();
-  if(milis - milisTemp == milisTrigg){
-    deviceProfileFetchFlag = true;
-  }
-
-  if(Serial.available()){
-    //get transmission code
-    //transmission code usage :
-    //a for standby
-    //b when arduino want to send sensor data
-    //c when arduino want to send device profile data
-    char transCode = Serial.read();
-    if(transCode =='b'){
-      getSensorArrayFromArduino();
-      sensorDataRecordFlag = true;
-
-    }else if(transCode == 'c'){
-      getDeviceProfileArrayFromArduino();
-      deviceProfileRecordFlag = true;
-    }else{
-      Serial.print('x');
+  int currMillis = millis();
+  if(checkNetwork() == false){
+    networkReconnect();
+    if(wifiStatus == true){
+      firebaseReconnect();
     }
-  }else{
-    if(deviceProfileFetchFlag == true){
-      bool isDataFetchGood = true;
+  }
+  if(currMillis - millisTemp == millisTrigg){
+    if(pingFirebase() == true){
       fetchDeviceProfileData();
-      //evaluate the data fetching process for any mistake at data transmission
-      for(int a = 0; a<23; a++){
-        if(deviceProfileIncomingDataStatus[a] == false){
-          isDataFetchGood = false;
+      if(isIncomingDataValid() == true){
+        pingArduino('z');
+        sendDeviceProfileArrayDataToArduino();
+
+      }
+    }
+  }
+  if(Serial.available()){
+    char transCode = Serial.read();
+    //ping
+      if(transCode = 'a'){
+        if(signupStatus == true){
+          Serial.println('n');
+        }else if(wifiStatus == false){
+          Serial.println('w');
+        }else if(signupStatus == false){
+          Serial.println('f');
         }
       }
-      //when data is good
-      if(isDataFetchGood == true){
-        //transCode z for sending sensor data to arduino through serial comm
-        pingArduino('z');
-        delay(100);
-        sendDeviceProfileArrayDataToArduino();
+
+    //sensor record
+      else if(transCode == 'b'){
+        getSensorArrayFromArduino();
       }
-      //when data is not good try to fetch next second
-    }else if (sensorDataRecordFlag == true){
-      recordSensorData();
-    }
   }
+  
 }
 
 //--- network utils function ---//
@@ -155,190 +144,152 @@ void networkReconnect(){
 bool checkNetwork(){
   return (WiFi.status()!=WL_CONNECTED)?false:true;
 }
-
 //--- firebase utils function ---//
 //firebase reconnect function
-void firebaseReconnect(){
-  //trying to reconnect firebase
-  ledBlink();
-  //double check
-  if(checkNetwork() == 0){
-    //not connected to network
-    wifiStatus = false;
-  }else{
-    wifiStatus = true;
-    //wifi good, try to reconnect to firebase
-    config.token_status_callback = tokenStatusCallback;
-    Firebase.reconnectWiFi(true);
-    Firebase.begin(&config, &fbsAuth);
-    
-    if(Firebase.ready()){
-      //signup ok
-      signupStatus = true;
+  void firebaseReconnect(){
+    //trying to reconnect firebase
+    ledBlink();
+    //double check
+    if(checkNetwork() == 0){
+      //not connected to network
+      wifiStatus = false;
     }else{
-      firebaseErrorMsg = config.signer.signupError.message.c_str();
+      wifiStatus = true;
+      //wifi good, try to reconnect to firebase
+      config.token_status_callback = tokenStatusCallback;
+      Firebase.reconnectWiFi(true);
+      Firebase.begin(&config, &fbsAuth);
+      
+      if(Firebase.ready()){
+        //signup ok
+        signupStatus = true;
+      }else{
+        firebaseErrorMsg = config.signer.signupError.message.c_str();
+      }
     }
   }
-}
+//ping firebase
+  bool pingFirebase(){
+    int newData = getIntData("isNewdataProfile");
+    if(newData == 0){
+      return false;
+    }else{
+      return true;
+    }
+  }
 //record int data to firebase function
-bool recordIntData(String entityPath, int entityValue){
-  bool isRecordDataSuccess = false;
-  if (signupStatus){
-    if(Firebase.ready()){
-      //firebase ready, try to saving int data
-      if(Firebase.RTDB.setInt(&fbsData, ("Data/"+ entityPath), entityValue)){
-        ledBlink();
-        //success saving to db
-        isRecordDataSuccess = true;
+  bool recordIntData(String entityPath, int entityValue){
+    bool isRecordDataSuccess = false;
+    if (signupStatus){
+      Serial.println("signup ok");
+      if(Firebase.ready()){
+        Serial.println("firebase ok");
+        //firebase ready, try to saving int data
+        if(Firebase.RTDB.setInt(&fbsData, ("Data/"+ entityPath), entityValue)){
+          ledBlink();
+          Serial.println("ok");
+          //success saving to db
+          isRecordDataSuccess = true;
+        }else{
+          //Failed saving data
+          isRecordDataSuccess = false;
+        }
       }else{
-        //Failed saving data
+        //firebase not ready
         isRecordDataSuccess = false;
       }
     }else{
-      //firebase not ready
+      //not sign up
       isRecordDataSuccess = false;
     }
-  }else{
-    //not sign up
-    isRecordDataSuccess = false;
+    return isRecordDataSuccess;
+    
   }
-  return isRecordDataSuccess;
-  
-}
 //get int data from firebase function
-int getIntData(String entityPath){
-  int tempVal = -1;
-  if (signupStatus){
-    if(Firebase.ready()){
-      //firebase ready, try to get int data
-      if(Firebase.RTDB.getInt(&fbsData, ("Data/"+entityPath))){
-        ledBlink();
-        tempVal = fbsData.to<int>();
-        //success get data
+  int getIntData(String entityPath){
+    int tempVal = -1;
+    if (signupStatus){
+      if(Firebase.ready()){
+        //firebase ready, try to get int data
+        if(Firebase.RTDB.getInt(&fbsData, ("Data/"+entityPath))){
+          ledBlink();
+          tempVal = fbsData.to<int>();
+          //success get data
+        }else{
+          //Failed get data
+          tempVal = -2;
+        }
       }else{
-        //Failed get data
-        tempVal = -2;
+        //firebase not ready
+        tempVal = -3;
       }
     }else{
-      //firebase not ready
-      tempVal = -3;
+      //not sign up
+      tempVal = -4;
     }
-  }else{
-    //not sign up
-    tempVal = -4;
+    return tempVal;
   }
-  return tempVal;
-}
 //record sensor data to firebase sequence function
-void recordSensorData(){
-  //record run once, once the record sequence done the event flag is dispelled
-  //Begin record data sequence : sensor
-  for(int i=0; i<11; i++){
-    sensorRecordDataStatus[i] = recordIntData("sensor/"+ String(i), sensorArrayData[i]);
-  }
-  sensorDataRecordFlag = false;
-}
-//get sensor data from firebase sequence function
-void fetchSensorData(){
-  //fetch run once, once the fetch sequence done the event flag is dispelled
-  //Begin fetch data sequence : sensor
-  for(int z = 0; z<11; z++){
-    int temp = getIntData("sensor/"+String(z));
-    if(temp>=0){
-      sensorArrayDataFirebase[z] = temp;
-      sensorFetchDataStatus[z] = true;
-    }else{
-      sensorFetchDataStatus[z] = false;
+  void recordSensorData(){
+    //record run once, once the record sequence done the event flag is dispelled
+    //Begin record data sequence : sensor
+    Serial.println("begin record");
+    for(int i=0; i<8; i++){
+      sensorRecordDataStatus[i] = recordIntData("sensor/"+ String(i), i+1);
     }
+    sensorDataRecordFlag = false;
   }
-  sensorDataFetchFlag = false;
-}
-//record device profile data to firebase sequence function
-void recordDeviceProfileData(){
-  //record run once, once the record sequence done the event flag is dispelled
-  //Begin record  data sequence : device profile
-  for(int t = 0; t<23; t++){
-    deviceProfileRecordDataStatus[t] = recordIntData("device_profile/"+String(t), deviceProfileArrayDataTemporary[t]);
-  }
-  deviceProfileRecordFlag = false;
-}
 //get device profile data from firebase sequence function
-void fetchDeviceProfileData(){
-  //fetch run once, once the fetch sequence done the event flag is dispelled
-   //Begin fetch data sequence : device profile
-   for(int x = 0; x<23; x++){
-    int temp = getIntData("device_profile/"+String(x));
-    if(temp>=0){
-      deviceProfileArrayDataIncoming[x] = temp;
-      deviceProfileIncomingDataStatus[x] = true;
-    }else{
-      deviceProfileIncomingDataStatus[x] = false;
+  void fetchDeviceProfileData(){
+    //fetch run once, once the fetch sequence done the event flag is dispelled
+    //Begin fetch data sequence : device profile
+    for(int x = 0; x<18; x++){
+      int temp = getIntData("device_profile/"+String(x));
+      if(temp>=0){
+        deviceProfileArrayData[x] = temp;
+        deviceProfileIncomingDataStatus[x] = true;
+      }else{
+        deviceProfileIncomingDataStatus[x] = false;
+      }
     }
-   }
-   deviceProfileFetchFlag = false;
-}
+    deviceProfileFetchFlag = false;
+  }
+//validator
+  bool isIncomingDataValid(){
+    bool stat = true;
+    for(int y = 0; y<18; y++){
+      if(deviceProfileIncomingDataStatus[y] == false){
+        stat = false;
+      }
+    }
+    return stat;
+  }
 
 //--- serial communication utils ---//
-  //ping serial arduino 
-void pingArduino(char transCode){
-  Serial.println(transCode);
-}
-  //send sensor array data to arduino function
-void sendSensorArrayDataToArduino(){
-  for (int i = 0; i < 11; i++) {
-    Serial.print(sensorArrayData[i]); // Send the array element
-    Serial.print(","); // Send a comma as a separator
+//ping serial arduino 
+  void pingArduino(char transCode){
+    Serial.println(transCode);
   }
-  Serial.println();
-  sendSensorDataToArduinoFlag  = false;
-}
-  //send device profile data to arduino function
-void sendDeviceProfileArrayDataToArduino(){
-  for (int i = 0; i < 23; i++) {
-    Serial.print(deviceProfileArrayDataTemporary[i]); // Send the array element
-    Serial.print(","); // Send a comma as a separator
+//send device profile data to arduino function
+  void sendDeviceProfileArrayDataToArduino(){
+    for (int i = 0; i < 18; i++) {
+      Serial.print(deviceProfileArrayData[i]); // Send the array element
+      Serial.print(","); // Send a comma as a separator
+    }
+      Serial.println();
   }
-  Serial.println();
-  sendDeviceProfileDataToArduinoFlag = false;
-}
-  //get device profile data from arduino 
-void getDeviceProfileArrayFromArduino(){
-  // Read the incoming data and populate the array
-    for (int i = 0; i < 23; i++) {
-      deviceProfileArrayDataTemporary[i] = Serial.parseInt(); // Read and convert to integer
-      Serial.read(); // Read the comma separator
-    }
-
-    // Process the received array data
-    Serial.println("Received value at index ");
-    for (int i = 0; i < 23; i++) {
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.print(deviceProfileArrayDataTemporary[i]);
-      Serial.println("|");
-    }
-}
-  //get sensor data from arduino
-void getSensorArrayFromArduino(){
-  // Read the incoming data and populate the array
-    for (int i = 0; i < 11; i++) {
-      sensorArrayData[i] = Serial.parseInt(); // Read and convert to integer
-      Serial.read(); // Read the comma separator
-    }
-
-    // Process the received array data
-    Serial.println("Received value at index ");
-    for (int i = 0; i < 11; i++) {
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.print(sensorArrayData[i]);
-      Serial.println("|");
-    }
-}
+//get sensor data from arduino
+  void getSensorArrayFromArduino(){
+    // Read the incoming data and populate the array
+      for (int i = 0; i < 8; i++) {
+        recordIntData("sensor/"+ String(i), Serial.parseInt());
+        Serial.read(); // Read the comma separator
+      }
+  }
 
 //integrated led blink utils function
 void ledBlink(){
   digitalWrite(LED_BUILTIN, LOW);
-  delay(1);
+  delay(10);
   digitalWrite(LED_BUILTIN, HIGH); 
 }
