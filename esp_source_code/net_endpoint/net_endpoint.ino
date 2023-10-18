@@ -99,6 +99,14 @@ void loop() {
     if(pingFirebase() == true){
       fetchNewDeviceData();
     }
+    if(pingFirebaseDebug()){
+      fetchDebugDataFromFirebase();
+    }
+    if(checkNetwork() == false){
+      pingArduino('w');
+    }else if(signupStatus == false){
+      pingArduino('f');
+    }
   }
 }
 
@@ -172,8 +180,8 @@ int getIntData(String entityPath){
     if(Firebase.RTDB.getInt(&fbsData, ("aquariums_data/"+entityPath))){
         ledBlink();
         tempVal = fbsData.to<int>();
-      }
     }
+  }
   return tempVal;
 }
 bool getSensorArrayFromArduino(){
@@ -219,7 +227,6 @@ void pingArduino(char transCode){
 }
 bool pingFirebase(){
   bool fireStat = false;
-  Serial.println("ping");
   if(Firebase.ready()){
     if(Firebase.RTDB.getBool(&fbsData, "aquariums_data/devprof/isNewData")){
       ledBlink();
@@ -231,6 +238,57 @@ bool pingFirebase(){
   }
   return fireStat;
 }
+
+bool pingFirebaseDebug(){
+  bool fireStat = false;
+  if(Firebase.ready()){
+    if(Firebase.RTDB.getBool(&fbsData, "debug/isNewData")){
+      ledBlink();
+      fireStat = fbsData.to<bool>();
+    }
+  }
+  else{
+    fireStat =  false;
+  }
+  return fireStat;
+}
+
+void fetchDebugDataFromFirebase(){
+  int arrBuffer [13];
+  for(int x = 0; x<13;x++){
+    if(Firebase.ready()){
+      if(x<12){
+        if(Firebase.RTDB.getInt(&fbsData, ("debug/"+String(x+1)))){
+          ledBlink();
+          int tempVal = fbsData.to<int>();
+          if(tempVal>=0){
+            arrBuffer[x] = tempVal;
+          }
+        }
+      }else{
+        if(Firebase.RTDB.getBool(&fbsData, "debug/debugStatus")){
+          ledBlink();
+          bool debugStat = fbsData.to<bool>();
+          arrBuffer[12] = debugStat?1:0;
+        }else{
+          Serial.println("Failed saving data cuz : " + fbsData.errorReason());
+        }
+      }
+    }
+  }
+  if(Firebase.ready()){
+    if(Firebase.RTDB.setBool(&fbsData, ("debug/isNewData"), false)){
+      ledBlink();
+    }
+  }
+  pingArduino('x');
+  for(int y = 0; y<13; y++){
+    Serial.print(arrBuffer[y]); // Send the array element
+    Serial.print(","); // Send a comma as a separator
+  }
+  Serial.println();
+}
+
 void ledBlink(){
   digitalWrite(LED_BUILTIN, LOW);
   delay(1);

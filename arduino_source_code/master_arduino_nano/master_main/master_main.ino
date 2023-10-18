@@ -16,6 +16,9 @@
   bool isNewData = false;
   int deviceMode = 1; //1 is default mode // 2 is viewing mode // 3 feeding mode
 
+//debug parameters data
+  int debugData [13] ={255,255,255,255,255,1,1,1,1,1,1,0,0};
+
 //program time tracker declaration
   unsigned long globalMillisTemp1s = 0;
   unsigned long globalMillisTrig1s = 1000;
@@ -170,9 +173,13 @@ void loop() {
       char transCode = Serial.read();
       //transCode z is for signalling arduino to prepare and receiving the transmitted device profile data from esp
       if(transCode == 'z'){ 
-          getDeviceProfileFromEsp();
-          wifiStatus = true;
-          firebaseStatus = true;
+        getDeviceProfileFromEsp();
+        wifiStatus = true;
+        firebaseStatus = true;
+      }
+      if(transCode == 'x'){
+        //get debug
+        getDebugDataFromEsp();
       }
       //transcode 'w' indicate the wifi is offline and so do the firebase
       if(transCode == 'w'){
@@ -231,46 +238,62 @@ void loop() {
         if(delayNewDoseProfile == true && minuteCounter == 1439){
           dosingCalculator();
         }
-      //check device mode
-        //normal mode regulate normal led state evaluation
-        if(deviceMode == 1){
-          evaluateLedState(rtc.hour());
-          evaluateReturnPumpState(true);
+      //check debug mode
+        if(debugData[12]>0){
+          analogWrite(ledRedPin, debugData[0]);
+          analogWrite(ledGreenPin, debugData[1]);
+          analogWrite(ledBluePin, debugData[2]);
+          analogWrite(ledWhitePin, debugData[3]);
+          analogWrite(ledFanPin, debugData[4]);
+          digitalWrite(dosePumpPins[0], debugData[5]);
+          digitalWrite(dosePumpPins[1], debugData[6]);
+          digitalWrite(dosePumpPins[2], debugData[7]);
+          digitalWrite(topUpPumpPin, debugData[8]);
+          digitalWrite(returnPumpPin, debugData[9]);
+          digitalWrite(wavePumpLeft, debugData[10]);
+          digitalWrite(wavePumpRight, debugData[11]);
+        }else{
+          //check device mode
+          //normal mode regulate normal led state evaluation
+          if(deviceMode == 1){
+            evaluateLedState(rtc.hour());
+            evaluateReturnPumpState(true);
+          }
+          //viewing mode regulate more actinic lighting led state evaluation
+          else if (deviceMode == 2){
+            waveMode = 3;
+            evaluateReturnPumpState(true);
+            digitalWrite(ledFanPin, LOW);
+            analogWrite(ledRedPin, 180);
+            analogWrite(ledGreenPin, 180);
+            analogWrite(ledBluePin, 255);
+            analogWrite(ledWhitePin, 200);
+          }
+          //feeding mode regulate led to display white spectrum, wave pump and return pump to off
+          else if(deviceMode == 3){
+            waveMode = 0;
+            evaluateReturnPumpState(false);
+            digitalWrite(ledFanPin, LOW);
+            analogWrite(ledRedPin, 0);
+            analogWrite(ledGreenPin, 0);
+            analogWrite(ledBluePin, 175);
+            analogWrite(ledWhitePin, 255);
+          }
+          //device state evaluation
+          //schedule and evaluate wavemaker state
+          wavemakerScheduler();
+          //schedule and evaluate dose pump state
+          //dose scheduler
+          dosingScheduler();
+          //evaluate the dose and schedule
+          evaluateDoseState();
+          //evaluate top up pump state
+          evaluateTopUpState();
+          //evaluate sumpfan state
+          evaluateSumpFanState();
+          //evaluate panel state
+          evaluatePanelState();
         }
-        //viewing mode regulate more actinic lighting led state evaluation
-        else if (deviceMode == 2){
-          waveMode = 3;
-          evaluateReturnPumpState(true);
-          digitalWrite(ledFanPin, LOW);
-          analogWrite(ledRedPin, 180);
-          analogWrite(ledGreenPin, 180);
-          analogWrite(ledBluePin, 255);
-          analogWrite(ledWhitePin, 200);
-        }
-        //feeding mode regulate led to display white spectrum, wave pump and return pump to off
-        else if(deviceMode == 3){
-          waveMode = 0;
-          evaluateReturnPumpState(false);
-          digitalWrite(ledFanPin, LOW);
-          analogWrite(ledRedPin, 0);
-          analogWrite(ledGreenPin, 0);
-          analogWrite(ledBluePin, 175);
-          analogWrite(ledWhitePin, 255);
-        }
-    //device state evaluation
-      //schedule and evaluate wavemaker state
-      wavemakerScheduler();
-      //schedule and evaluate dose pump state
-      //dose scheduler
-      dosingScheduler();
-      //evaluate the dose and schedule
-      evaluateDoseState();
-      //evaluate top up pump state
-      evaluateTopUpState();
-      //evaluate sumpfan state
-      evaluateSumpFanState();
-      //evaluate panel state
-      evaluatePanelState();
 }
 //scheduler
   void ledScheduler(){
@@ -468,7 +491,6 @@ void loop() {
   void evaluateLcdState(int hour, int minute){
     String secondRow = "Ph:"+String(int(phReading))+" T:"+String(int(temperatureReading));
     String firstRow = "-";
-    Serial.println(secondRow);
     if(waveMode == 1){
       firstRow = String(hour)+":"+String(minute)+" WF:Lin";
     }else if(waveMode == 2){
@@ -476,7 +498,6 @@ void loop() {
     }else if(waveMode == 3){
       firstRow = String(hour)+":"+String(minute)+" WF:Asy";
     }
-    Serial.println(firstRow);
     lcd.clear();
     if(secondRow.length()<16){
       //display dose state
@@ -561,6 +582,13 @@ void loop() {
     }
     //re-assign is new data to true indicating there's new device profile data from firebase
     isNewData = true;
+  }
+  void getDebugDataFromEsp(){
+    for(int i = 0; i<13 ; i++){
+      int retrievedData = Serial.parseInt();
+      debugData[i]= retrievedData;
+      Serial.read();
+    }
   }
   void sendSensorDataToEsp(uRTCLib rtcs){
     int phValue = phReading*100.0;
