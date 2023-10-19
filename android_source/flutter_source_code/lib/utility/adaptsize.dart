@@ -9,7 +9,7 @@ class AdaptiveSize {
     return (deviceSize!.width / pixPreferredWidth) * desiredSize;
   }
 
-  double adaptHeight({required double desiredSide}) {
-    return (deviceSize!.height / pixPreferredHeight) * desiredSide;
+  double adaptHeight({required double desiredSize}) {
+    return (deviceSize!.height / pixPreferredHeight) * desiredSize;
   }
 }

@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
         splash: Center(
           child: SizedBox(
             width: adaptSize.adaptWidth(desiredSize: 260),
-            height: adaptSize.adaptHeight(desiredSide: 260),
+            height: adaptSize.adaptHeight(desiredSize: 260),
             child: SvgPicture.asset("assets/img/svg/logo.svg"),
           ),
         ),

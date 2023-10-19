@@ -1,22 +1,61 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/utility/image_circle.dart';
+import 'package:flutter_source_code/widget/default_text.dart';
 
-Widget modeWidget(
-    {required AdaptiveSize adaptSize,
-    required ImageProvider imageProv,
-    double? prefWidth,
-    double? prefHeight}) {
+Widget modeWidget({
+  required AdaptiveSize adaptSize,
+  required ImageProvider imageProv,
+  required String modeName,
+  String? modeBodyText,
+  required Widget actionButton1,
+  required actionButton2,
+  Widget? actionButton3,
+  double? prefWidth,
+  double? prefHeight,
+  double? prefTextBodyWidth,
+  double? prefTextBodyHeight,
+}) {
   return SizedBox(
-    width: adaptSize.adaptWidth(desiredSize: prefWidth ?? 300),
-    height: adaptSize.adaptHeight(desiredSide: prefHeight ?? 132),
+    width: adaptSize.adaptWidth(desiredSize: prefWidth ?? 340),
+    height: adaptSize.adaptHeight(desiredSize: prefHeight ?? 132),
     child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         pngToCircleImage(
           imageProv: imageProv,
           diameter: adaptSize.adaptWidth(desiredSize: 132),
+        ),
+        Padding(
+          padding: EdgeInsets.only(left: adaptSize.adaptWidth(desiredSize: 20)),
+          child: SizedBox(
+            width: adaptSize.adaptWidth(desiredSize: prefTextBodyWidth ?? 168),
+            height:
+                adaptSize.adaptHeight(desiredSize: prefTextBodyHeight ?? 101),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                headingText1(text: modeName, adaptiveSize: adaptSize),
+                Divider(),
+                Text(modeBodyText ?? "-"),
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    actionButton1,
+                    Divider(),
+                    actionButton2,
+                    actionButton3 ??
+                        SizedBox(
+                          width: 1,
+                          height: 1,
+                        ),
+                  ],
+                )
+              ],
+            ),
+          ),
         )
       ],
     ),
