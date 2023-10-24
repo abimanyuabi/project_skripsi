@@ -32,19 +32,18 @@ Widget modeWidget({
           child: SizedBox(
             width: adaptSize.adaptWidth(desiredSize: prefTextBodyWidth ?? 168),
             height:
-                adaptSize.adaptHeight(desiredSize: prefTextBodyHeight ?? 101),
+                adaptSize.adaptHeight(desiredSize: prefTextBodyHeight ?? 110),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 headingText1(text: modeName, adaptiveSize: adaptSize),
-                Divider(),
-                Text(modeBodyText ?? "-"),
-                Divider(),
+                bodyText2(text: modeBodyText ?? "-", adaptiveSize: adaptSize),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     actionButton1,
-                    Divider(),
+                    const Divider(),
                     actionButton2,
                     actionButton3 ??
                         SizedBox(

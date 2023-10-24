@@ -37,3 +37,25 @@ Widget defaultButton(
     ),
   );
 }
+
+Widget actionButton(
+    {required String buttonText,
+    required void Function() actionFunc,
+    required AdaptiveSize adaptiveSize,
+    Color? textColor,
+    Color? buttonColor,
+    Color? buttonBorderSideColor,
+    double? buttonEdgeRadius}) {
+  return SizedBox(
+    width: adaptiveSize.adaptWidth(desiredSize: 108),
+    height: adaptiveSize.adaptHeight(desiredSize: 26),
+    child: ElevatedButton(
+      onPressed: actionFunc,
+      child: defButtonText(
+        text: buttonText,
+        textColor: textColor,
+        adaptiveSize: adaptiveSize,
+      ),
+    ),
+  );
+}

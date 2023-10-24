@@ -21,8 +21,8 @@ class _SplashScreenState extends State<SplashScreen> {
       body: AnimatedSplashScreen(
         splash: Center(
           child: SizedBox(
-            width: adaptSize.adaptWidth(desiredSize: 260),
-            height: adaptSize.adaptHeight(desiredSize: 260),
+            width: adaptSize.adaptWidth(desiredSize: 280),
+            height: adaptSize.adaptHeight(desiredSize: 280),
             child: SvgPicture.asset("assets/img/svg/logo.svg"),
           ),
         ),
