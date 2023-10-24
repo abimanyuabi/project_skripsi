@@ -37,20 +37,21 @@ Widget bodyText1(
     style: TextStyle(
         fontSize: adaptiveSize.adaptWidth(desiredSize: 14),
         color: textColor ?? Colors.black,
-        fontWeight: fontWeight ?? FontWeight.w200),
+        fontWeight: fontWeight ?? FontWeight.w300),
   );
 }
 
 Widget bodyText2(
     {required String text,
     required AdaptiveSize adaptiveSize,
+    FontWeight? fontWeight,
     Color? textColor}) {
   return Text(
     text,
     style: TextStyle(
         fontSize: adaptiveSize.adaptWidth(desiredSize: 12),
         color: textColor ?? Colors.black,
-        fontWeight: FontWeight.w200),
+        fontWeight: fontWeight ?? FontWeight.w200),
   );
 }
 

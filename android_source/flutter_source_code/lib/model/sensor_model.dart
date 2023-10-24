@@ -22,9 +22,40 @@ class WaterChemistryModel {
       required this.dateTime});
 }
 
-class ParameterModel {
-  late SensorModel sensorModel;
-  late WaterChemistryModel waterChemistryModel;
-  ParameterModel(
-      {required this.sensorModel, required this.waterChemistryModel});
+List<SensorModel> dummySensor() {
+  return [
+    SensorModel(
+        phReadings: 8.4,
+        tempReadings: 32,
+        waterUsage: 20,
+        createdAt: DateTime.now()),
+    SensorModel(
+        phReadings: 8.2,
+        tempReadings: 30,
+        waterUsage: 18,
+        createdAt: DateTime.parse("2023-10-25")),
+  ];
+}
+
+List<WaterChemistryModel> dummyWaterChemistry() {
+  return [
+    WaterChemistryModel(
+      alkalinity: 8.7,
+      calcium: 450,
+      magnesium: 550,
+      dateTime: DateTime.now(),
+    ),
+    WaterChemistryModel(
+      alkalinity: 8.5,
+      calcium: 420,
+      magnesium: 510,
+      dateTime: DateTime.parse("2023-10-25"),
+    ),
+    WaterChemistryModel(
+      alkalinity: 8.5,
+      calcium: 420,
+      magnesium: 510,
+      dateTime: DateTime.parse("2023-10-26"),
+    ),
+  ];
 }

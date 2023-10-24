@@ -12,7 +12,7 @@ Widget defaultTextField({
   return SizedBox(
     width: adaptiveSize.adaptWidth(desiredSize: 120),
     child: TextFormField(
-      inputFormatters: [new LengthLimitingTextInputFormatter(maxLength ?? 5)],
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength ?? 5)],
       controller: textEditingController,
       maxLength: maxLength,
       keyboardType: TextInputType.number,

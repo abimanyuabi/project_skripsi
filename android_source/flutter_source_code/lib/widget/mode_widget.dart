@@ -46,7 +46,7 @@ Widget modeWidget({
                     const Divider(),
                     actionButton2,
                     actionButton3 ??
-                        SizedBox(
+                        const SizedBox(
                           width: 1,
                           height: 1,
                         ),
