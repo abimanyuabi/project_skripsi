@@ -72,7 +72,7 @@ Widget waterChemistryChartView(
         primaryXAxis: CategoryAxis(),
         series: <LineSeries<WaterChemistryModel, String>>[
           LineSeries<WaterChemistryModel, String>(
-              name: "Dkh",
+              name: "Alk",
               dataSource: arrayOfParameter,
               xValueMapper: (WaterChemistryModel data, _) =>
                   data.dateTime.month.toString() +
@@ -80,7 +80,7 @@ Widget waterChemistryChartView(
                   data.dateTime.day.toString(),
               yValueMapper: (WaterChemistryModel data, _) => data.alkalinity),
           LineSeries<WaterChemistryModel, String>(
-              name: "Calcium",
+              name: "Cal",
               dataSource: arrayOfParameter,
               xValueMapper: (WaterChemistryModel data, _) =>
                   data.dateTime.month.toString() +
@@ -88,7 +88,7 @@ Widget waterChemistryChartView(
                   data.dateTime.day.toString(),
               yValueMapper: (WaterChemistryModel data, _) => data.calcium),
           LineSeries<WaterChemistryModel, String>(
-              name: "Magnesium",
+              name: "Mag",
               dataSource: arrayOfParameter,
               xValueMapper: (WaterChemistryModel data, _) =>
                   data.dateTime.month.toString() +

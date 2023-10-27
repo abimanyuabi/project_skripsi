@@ -45,11 +45,20 @@ Widget actionButton(
     Color? textColor,
     Color? buttonColor,
     Color? buttonBorderSideColor,
-    double? buttonEdgeRadius}) {
+    double? buttonBorderWidth,
+    double? buttonEdgeRadius,
+    double? buttonWidth,
+    double? buttonHeight}) {
   return SizedBox(
-    width: adaptiveSize.adaptWidth(desiredSize: 108),
-    height: adaptiveSize.adaptHeight(desiredSize: 26),
+    width: adaptiveSize.adaptWidth(desiredSize: buttonWidth ?? 108),
+    height: adaptiveSize.adaptHeight(desiredSize: buttonHeight ?? 26),
     child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor ?? Colors.blue,
+          side: buttonBorderSideColor == null
+              ? null
+              : BorderSide(
+                  color: buttonBorderSideColor, width: buttonBorderWidth ?? 2)),
       onPressed: actionFunc,
       child: defButtonText(
         text: buttonText,

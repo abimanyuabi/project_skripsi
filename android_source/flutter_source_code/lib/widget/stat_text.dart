@@ -3,14 +3,14 @@ import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/widget/default_text.dart';
 import 'package:flutter_source_code/widget/text_field.dart';
 
-Widget statTextBox1({
-  required String parameterText,
-  required String parameterValue,
-  required String parameterScale,
-  required AdaptiveSize adaptiveSize,
-  required TextEditingController textEditingController,
-  DateTime? createdAt,
-}) {
+Widget statTextBox1(
+    {required String parameterText,
+    required String parameterValue,
+    required String parameterScale,
+    required AdaptiveSize adaptiveSize,
+    required TextEditingController textEditingController,
+    DateTime? createdAt,
+    int? maxValue}) {
   return SizedBox(
     width: adaptiveSize.adaptWidth(desiredSize: 320),
     height: adaptiveSize.adaptHeight(desiredSize: 24),
@@ -24,6 +24,7 @@ Widget statTextBox1({
           width: adaptiveSize.adaptWidth(desiredSize: 120),
           height: adaptiveSize.adaptHeight(desiredSize: 24),
           child: defaultTextField(
+              maxValue: maxValue,
               adaptiveSize: adaptiveSize,
               textEditingController: textEditingController,
               fieldSuffix: parameterScale),

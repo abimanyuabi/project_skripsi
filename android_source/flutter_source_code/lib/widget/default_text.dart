@@ -62,7 +62,7 @@ Widget defButtonText(
   return Text(
     text,
     style: TextStyle(
-        fontSize: adaptiveSize.adaptWidth(desiredSize: 12),
+        fontSize: adaptiveSize.adaptWidth(desiredSize: 14),
         color: textColor ?? Colors.black,
         fontWeight: FontWeight.w400),
   );
