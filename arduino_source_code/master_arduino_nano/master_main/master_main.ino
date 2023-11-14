@@ -1,103 +1,105 @@
 //library declaration
-  #include "uRTCLib.h" //rtc
-  #include <OneWire.h> //onewire serial comms
-  #include <DallasTemperature.h> //dallas ds18b20 temp sensor
-  #include "PCF8574.h" //GPIO expander
-  #include <LiquidCrystal_I2C.h>
+#include "uRTCLib.h" //rtc
+#include <OneWire.h> //onewire serial comms
+#include <DallasTemperature.h> //dallas ds18b20 temp sensor
+#include "PCF8574.h" //GPIO expander
+#include <LiquidCrystal_I2C.h>
 
 //object declaration
-  uRTCLib rtc(0x68); //rtc i2c address 0x68
-  PCF8574 gpioExpander(0x20); // gpio expander object
-  LiquidCrystal_I2C lcd(0x27, 16, 2);
+uRTCLib rtc(0x68); //rtc i2c address 0x68
+PCF8574 gpioExpander(0x20); // gpio expander object
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //status declaration
-  bool wifiStatus = false;
-  bool firebaseStatus = false;
-  bool isNewData = false;
-  int deviceMode = 1; //1 is default mode // 2 is viewing mode // 3 feeding mode
+bool wifiStatus = false;
+bool firebaseStatus = false;
+bool isNewData = false;
+int deviceMode = 1; //1 is default mode // 2 is viewing mode // 3 feeding mode
+String testStr = "l";
+bool isCrashed = false;
+String timeCrashed = "-";
 
 //debug parameters data
-  int debugData [13] ={255,255,255,255,255,1,1,1,1,1,1,0,0};
+int debugData [13] ={255,255,255,255,255,1,1,1,1,1,1,0,0};
 
 //program time tracker declaration
-  unsigned long globalMillisTemp1s = 0;
-  unsigned long globalMillisTrig1s = 1000;
-  unsigned long globalMillisTemp1m = 0;
-  unsigned long globalMillisTrig1m = 60000;
-  unsigned long currMillis = 0;
-  int minuteCounter = 0;
+int minuteCounter = 0;
+int globalSecondTemp1s = 99;
+int globalMinuteTemp1m = 0;
+bool isSecondElapsed = false;
+bool isMinuteElapsed = false;
 
 //sensor parameters declaration
-  //top up parameters declaration
-  #define waterLevelSensorPin A6
-  #define topUpPumpPin A3
-  int topUpCount = 0;
-  int waterLoss = 1; //deciliter
-  bool isTopUpDone = false;
+//top up parameters declaration
+#define waterLevelSensorPin A6
+#define topUpPumpPin A3
+int topUpCount = 0;
+int waterLoss = 1; //deciliter
+bool isTopUpDone = false;
 
-  //temp parameter declaration
-  #define temperatureSensorPin 2
-  #define sumpFanPin P1
-  float temperatureReading = 0;
-  OneWire tempDataLine(temperatureSensorPin);
-  DallasTemperature temperatureSensor(&tempDataLine);
+//temp parameter declaration
+#define temperatureSensorPin 2
+#define sumpFanPin P1
+float temperatureReading = 0;
+OneWire tempDataLine(temperatureSensorPin);
+DallasTemperature temperatureSensor(&tempDataLine);
 
-  //ph sensor parameter declaration
-  #define phSensorPin A7
-  float phReading = 0.0;
-  int phSamplingCount = 10;
-  float adcResolution = 1024.0;
+//ph sensor parameter declaration
+#define phSensorPin A7
+float phReading = 0.0;
+int phSamplingCount = 10;
+const float adcResolution = 1024.0;
 
 //led parameters declaration
-  #define ledFanPin P0
-  #define ledRedPin 3
-  #define ledGreenPin 5
-  #define ledBluePin 9
-  #define ledWhitePin 6
-  int ledStateFlag = 0; //0 night, 1 sunrise, 2 peak, 3 sunset
-  int ledBaseStrength [4] = {256, 256, 256, 256}; //RGBW
-  int ledTimings [4] = {5, 10, 14, 6}; //sunrise time, peak time, sunset time, night time
-  int ledTimingMultiplier [4] = {30, 100, 70, 5}; //sunrise, peak, sunset, night, to use this multiplier need to be divided by 100
-  int ledFinalStrength [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // led final strength = base strength * float(30/100); {sunrise x4, peak x4, sunset x4, night x4} RGBW
+#define ledFanPin P0
+#define ledRedPin 3
+#define ledGreenPin 5
+#define ledBluePin 9
+#define ledWhitePin 6
+int ledStateFlag = 0; //0 night, 1 sunrise, 2 peak, 3 sunset
+int ledBaseStrength [4] = {256, 256, 256, 256}; //RGBW
+int ledTimings [4] = {5, 10, 14, 6}; //sunrise time, peak time, sunset time, night time
+int ledTimingMultiplier [4] = {30, 100, 70, 5}; //sunrise, peak, sunset, night, to use this multiplier need to be divided by 100
+int ledFinalStrength [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // led final strength = base strength * float(30/100); {sunrise x4, peak x4, sunset x4, night x4} RGBW
 
 //dose parameters declaration
-  int doseDivider = 12; // divide the dose needed to several dose event
-  int doseInterval = 0; // trigger when dose event should occur in minutes
-  int doseEventFlag = 0;
-  int doseMinuteTemp = 0;
-  float dosePumpSpeed = 0.25; //speed volume ml/second
-  int doseCounter = 0; // count every dose event
-  int doseOffset = 5; // dose offset between every dose event to separate each dose event
-  int dosePumpPins [3] = {A2, A1, A0}; //dosing pump output pins
-  int doseTriggerDuration [3] = {0, 0, 0}; //dosing trigger duration in millisecond according to millis counter
-  int doseNeeded [3] = {1, 20, 20}; // needed dose for alk, cal, mag
-  float doseResolution [3] ={1.0, 10.0, 10.0}; //alk 1Dkh / 100ml, cal 10ppm / 100ml, mag 10ppm / 100ml
-  unsigned long doseMillisTemp = 0;
-  bool isDoseMillisSync = false;
-  bool delayNewDoseProfile = false;
+int doseDivider = 12; // divide the dose needed to several dose event
+int doseInterval = 0; // trigger when dose event should occur in minutes
+int doseEventFlag = 0;
+int doseMinuteTemp = 0;
+float dosePumpSpeed = 0.25; //speed volume ml/second
+int doseCounter = 0; // count every dose event
+int doseOffset = 5; // dose offset between every dose event to separate each dose event
+const int dosePumpPins [3] = {A2, A1, A0}; //dosing pump output pins
+unsigned int doseTriggerDuration [3] = {0, 0, 0}; //dosing trigger duration in millisecond according to millis counter
+int doseNeeded [3] = {1, 20, 20}; // needed dose for alk, cal, mag
+const float doseResolution [3] ={1.0, 10.0, 10.0}; //alk 1Dkh / 100ml, cal 10ppm / 100ml, mag 10ppm / 100ml
+unsigned long doseMillisTemp = 0;
+bool isDoseMillisSync = false;
+bool delayNewDoseProfile = false;
 
 //wavemaker parameters declaration
-  int wavePumpLeft = 4;
-  int wavePumpRight = 7;
-  int waveMode = 2; //1 bi-linear, 2 symmetric, 3 assymetric
-  int wavePumpCycle = 0;
-  int wavePumpDutyDuration = 12;
-  int wavePumpOffset = 2;
+const int wavePumpLeft = 4;
+const int wavePumpRight = 7;
+int waveMode = 2; //1 bi-linear, 2 symmetric, 3 assymetric
+int wavePumpCycle = 0;
+int wavePumpDutyDuration = 12;
+int wavePumpOffset = 2;
 
 //return pump parameters declaration
-  int returnPumpPin = 8;
-  bool returnPumpState = true;
+const int returnPumpPin = 8;
+bool returnPumpState = true;
 
 //common pin declaration
-  #define sdaPin A4
-  #define sclPin A5
+#define sdaPin A4
+#define sclPin A5
 
 //I/O panel parameters declaration
-  #define sdPilotLampPin P3
-  #define feedingModeSwitchPin P6
-  #define viewingModeSwitchPin P5
-  #define symmetricWaveSwitchPin P4
-  #define assymmetricWaveSwitchPin P2
+#define sdPilotLampPin P3
+#define feedingModeSwitchPin P6
+#define viewingModeSwitchPin P5
+#define symmetricWaveSwitchPin P4
+#define assymmetricWaveSwitchPin P2
 
 //setup parameters and object
 void setup() {
@@ -157,8 +159,12 @@ void setup() {
     dosingCalculator();
 }
 void loop() {
-  currMillis = millis();
   rtc.refresh();
+
+  if(deviceMode == 0 && isCrashed == false){
+    isCrashed = true;
+    timeCrashed = String(minuteCounter)+","+String(millis());
+  }
   //timing and program cycle
     if(minuteCounter == 1439){
       waterLoss = 0;
@@ -198,8 +204,8 @@ void loop() {
       }
     }
   //run every 1s for check wifi status with ping to esp via serial comm evaluate led state, and evaluate sensor readings
-    if(currMillis - globalMillisTemp1s > globalMillisTrig1s){
-      globalMillisTemp1s = currMillis;
+    if(rtc.second() != globalSecondTemp1s){
+      globalSecondTemp1s = rtc.second();
       //ping esp
         if(wifiStatus == false){
             pingEsp('a');
@@ -215,8 +221,8 @@ void loop() {
         evaluateLcdState(rtc.hour(), rtc.minute());
     }
   //run every 1 minute for sending sensor data to esp
-    if(currMillis - globalMillisTemp1m > globalMillisTrig1m){
-      globalMillisTemp1m = currMillis;
+    if(rtc.minute() != globalMinuteTemp1m){
+      globalMinuteTemp1m = rtc.minute();
       if(wifiStatus == true){
         sendSensorDataToEsp(rtc);
       }
@@ -252,7 +258,7 @@ void loop() {
           digitalWrite(returnPumpPin, debugData[9]);
           digitalWrite(wavePumpLeft, debugData[10]);
           digitalWrite(wavePumpRight, debugData[11]);
-        }else{
+        }else if(debugData[12]==0){
           //check device mode
           //normal mode regulate normal led state evaluation
           if(deviceMode == 1){
@@ -292,7 +298,7 @@ void loop() {
           //evaluate sumpfan state
           evaluateSumpFanState();
           //evaluate panel state
-          evaluatePanelState();
+          //evaluatePanelState();
         }
 }
 //scheduler
@@ -372,7 +378,6 @@ void loop() {
   }
   void dosingScheduler(){
     if(minuteCounter == 0){
-      doseCounter = doseCounter+1;
       doseEventFlag = 1;
     }else if(minuteCounter>0){
       if(minuteCounter == doseOffset){
@@ -381,7 +386,6 @@ void loop() {
         doseEventFlag = 3;
       }
       if(minuteCounter - doseMinuteTemp == doseInterval){
-        doseCounter = doseCounter+1;
         doseEventFlag = 1;
       }else if(minuteCounter - (doseMinuteTemp + doseOffset) == doseInterval){
         doseEventFlag = 2;
@@ -492,11 +496,19 @@ void loop() {
     String secondRow = "Ph:"+String(int(phReading))+" T:"+String(int(temperatureReading));
     String firstRow = "-";
     if(waveMode == 1){
-      firstRow = String(hour)+":"+String(minute)+" WF:Lin";
+      firstRow = String(hour)+":"+String(minute)+"WF:"+String(waveMode)+","+String(deviceMode)+","+String(debugData[12]);
     }else if(waveMode == 2){
-      firstRow = String(hour)+":"+String(minute)+" WF:Sym";
+      firstRow = String(hour)+":"+String(minute)+"WF:"+String(waveMode)+","+String(deviceMode)+","+String(debugData[12]);
     }else if(waveMode == 3){
-      firstRow = String(hour)+":"+String(minute)+" WF:Asy";
+      firstRow = String(hour)+":"+String(minute)+"WF:"+String(waveMode)+","+String(deviceMode)+","+String(debugData[12]);
+    }else if(waveMode == 0){
+      firstRow = String(hour)+":"+String(minute)+"WF:"+String(waveMode)+","+String(deviceMode)+","+String(debugData[12]);
+    }else{
+      firstRow = String(hour)+":"+String(minute)+"WF:"+String(waveMode)+","+String(deviceMode)+","+String(debugData[12]);
+    }
+    if(isCrashed == true){
+      firstRow = timeCrashed;
+      secondRow = String(adcResolution)+","+String(returnPumpPin)+","+String(testStr)+","+String(doseNeeded[1]);
     }
     lcd.clear();
     if(secondRow.length()<16){

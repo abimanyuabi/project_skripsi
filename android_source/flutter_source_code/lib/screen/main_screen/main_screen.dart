@@ -8,11 +8,15 @@ import 'package:flutter_source_code/widget/default_text.dart';
 import 'package:flutter_source_code/widget/mode_widget.dart';
 import 'package:flutter_source_code/widget/stat_text.dart';
 
-Widget mainScreen(
-    {required AdaptiveSize adaptSize,
-    required TextEditingController alkalinityTextEditingController,
-    required TextEditingController calciumTextEditingController,
-    required TextEditingController magnesiumTextEditingController}) {
+Widget mainScreen({
+  required AdaptiveSize adaptSize,
+  required TextEditingController alkalinityTextEditingController,
+  required TextEditingController calciumTextEditingController,
+  required TextEditingController magnesiumTextEditingController,
+  required ValueNotifier<bool> feedingMode,
+  required ValueNotifier<bool> viewingMode,
+  required ValueNotifier<int> waveMode,
+}) {
   return SizedBox(
     width: adaptSize.deviceSize.width,
     child: Column(
@@ -35,22 +39,41 @@ Widget mainScreen(
                   modeName: "Feeding Mode",
                   modeBodyText:
                       "Turn off main return pump and wave maker pump.",
-                  actionButton1: defaultButton(
+                  actionButton1: ValueListenableBuilder(
+                    valueListenable: feedingMode,
+                    builder: (context, feedingModeFlag, child) => defaultButton(
+                        adaptiveSize: adaptSize,
+                        buttonText: "On",
+                        textColor: feedingModeFlag == true
+                            ? Colors.white
+                            : Colors.black,
+                        buttonColor: feedingModeFlag == true
+                            ? Colors.green
+                            : Color.fromARGB(255, 200, 200, 200),
+                        prefButtonHeight:
+                            adaptSize.adaptHeight(desiredSize: 24),
+                        prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                        actionFunc: () {
+                          feedingMode.value = true;
+                        }),
+                  ),
+                  actionButton2: ValueListenableBuilder(
+                    valueListenable: feedingMode,
+                    builder: (context, feedingModeFlag, child) => defaultButton(
                       adaptiveSize: adaptSize,
-                      buttonText: "On",
-                      textColor: Colors.white,
-                      buttonColor: Colors.green,
+                      buttonText: "Off",
+                      textColor: feedingModeFlag == false
+                          ? Colors.white
+                          : Colors.black,
+                      actionFunc: () {
+                        feedingMode.value = false;
+                      },
+                      buttonColor: feedingModeFlag == false
+                          ? Colors.red
+                          : Color.fromARGB(255, 200, 200, 200),
                       prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
                       prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                      actionFunc: () {}),
-                  actionButton2: defaultButton(
-                    adaptiveSize: adaptSize,
-                    buttonText: "Off",
-                    textColor: Colors.white,
-                    actionFunc: () {},
-                    buttonColor: Colors.red,
-                    prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                    prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                    ),
                   ),
                   imageProv: Assets.img.png.feedingMode.provider(),
                 ),
@@ -75,32 +98,59 @@ Widget mainScreen(
                     modeName: "Wave Mode",
                     modeBodyText: "Adjust wave pattern on wavemaker pump",
                     adaptSize: adaptSize,
-                    actionButton1: defaultButton(
-                      adaptiveSize: adaptSize,
-                      buttonText: "Linear",
-                      textColor: Colors.white,
-                      buttonColor: Colors.lightBlue,
-                      prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                      prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                      actionFunc: () {},
+                    actionButton1: ValueListenableBuilder(
+                      valueListenable: waveMode,
+                      builder: (context, waveModeFlag, child) => defaultButton(
+                        adaptiveSize: adaptSize,
+                        buttonText: "Linear",
+                        textColor:
+                            waveModeFlag == 1 ? Colors.white : Colors.black,
+                        buttonColor: waveModeFlag == 1
+                            ? Colors.lightBlue
+                            : Color.fromARGB(255, 200, 200, 200),
+                        prefButtonHeight:
+                            adaptSize.adaptHeight(desiredSize: 24),
+                        prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                        actionFunc: () {
+                          waveMode.value = 1;
+                        },
+                      ),
                     ),
-                    actionButton2: defaultButton(
-                      adaptiveSize: adaptSize,
-                      buttonText: "Symm",
-                      textColor: Colors.white,
-                      buttonColor: Colors.lightBlue,
-                      actionFunc: () {},
-                      prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                      prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                    actionButton2: ValueListenableBuilder(
+                      valueListenable: waveMode,
+                      builder: (context, waveModeFlag, child) => defaultButton(
+                        adaptiveSize: adaptSize,
+                        buttonText: "Symm",
+                        textColor:
+                            waveModeFlag == 2 ? Colors.white : Colors.black,
+                        buttonColor: waveModeFlag == 2
+                            ? Colors.lightBlue
+                            : Color.fromARGB(255, 200, 200, 200),
+                        prefButtonHeight:
+                            adaptSize.adaptHeight(desiredSize: 24),
+                        prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                        actionFunc: () {
+                          waveMode.value = 2;
+                        },
+                      ),
                     ),
-                    actionButton3: defaultButton(
-                      adaptiveSize: adaptSize,
-                      buttonText: "Asymm",
-                      textColor: Colors.white,
-                      buttonColor: Colors.lightBlue,
-                      actionFunc: () {},
-                      prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                      prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                    actionButton3: ValueListenableBuilder(
+                      valueListenable: waveMode,
+                      builder: (context, waveModeFlag, child) => defaultButton(
+                        adaptiveSize: adaptSize,
+                        buttonText: "Asym",
+                        textColor:
+                            waveModeFlag == 3 ? Colors.white : Colors.black,
+                        buttonColor: waveModeFlag == 3
+                            ? Colors.lightBlue
+                            : Color.fromARGB(255, 200, 200, 200),
+                        prefButtonHeight:
+                            adaptSize.adaptHeight(desiredSize: 24),
+                        prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                        actionFunc: () {
+                          waveMode.value = 3;
+                        },
+                      ),
                     ),
                     imageProv: Assets.img.png.waveMode.provider()),
               ),
@@ -125,22 +175,41 @@ Widget mainScreen(
                   modeName: "Viewing Mode",
                   modeBodyText:
                       "Adjust Light to make it more actinic or more white",
-                  actionButton1: defaultButton(
+                  actionButton1: ValueListenableBuilder(
+                    valueListenable: viewingMode,
+                    builder: (context, viewingModeFlag, child) => defaultButton(
+                        adaptiveSize: adaptSize,
+                        buttonText: "On",
+                        textColor: viewingModeFlag == true
+                            ? Colors.white
+                            : Colors.black,
+                        buttonColor: viewingModeFlag == true
+                            ? Colors.green
+                            : Color.fromARGB(255, 200, 200, 200),
+                        prefButtonHeight:
+                            adaptSize.adaptHeight(desiredSize: 24),
+                        prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                        actionFunc: () {
+                          viewingMode.value = true;
+                        }),
+                  ),
+                  actionButton2: ValueListenableBuilder(
+                    valueListenable: viewingMode,
+                    builder: (context, viewingModeFlag, child) => defaultButton(
                       adaptiveSize: adaptSize,
-                      buttonText: "On",
-                      textColor: Colors.white,
-                      buttonColor: Colors.green,
+                      buttonText: "Off",
+                      textColor: viewingModeFlag == false
+                          ? Colors.white
+                          : Colors.black,
+                      actionFunc: () {
+                        viewingMode.value = false;
+                      },
+                      buttonColor: viewingModeFlag == false
+                          ? Colors.red
+                          : Color.fromARGB(255, 200, 200, 200),
                       prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
                       prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                      actionFunc: () {}),
-                  actionButton2: defaultButton(
-                    adaptiveSize: adaptSize,
-                    buttonText: "Off",
-                    textColor: Colors.white,
-                    actionFunc: () {},
-                    buttonColor: Colors.red,
-                    prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                    prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
+                    ),
                   ),
                   imageProv: Assets.img.png.lightMode.provider(),
                 ),

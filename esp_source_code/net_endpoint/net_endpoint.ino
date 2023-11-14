@@ -99,7 +99,7 @@ void loop() {
     if(pingFirebase() == true){
       fetchNewDeviceData();
     }
-    if(pingFirebaseDebug()){
+    if(pingFirebaseDebug()==true){
       fetchDebugDataFromFirebase();
     }
     if(checkNetwork() == false){

@@ -58,6 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
   ValueNotifier<bool> debugReturnPumpFlag = ValueNotifier<bool>(false);
   ValueNotifier<bool> debugTopUpPumpFlag = ValueNotifier<bool>(false);
   ValueNotifier<bool> debugSumpFanFlag = ValueNotifier<bool>(false);
+  ValueNotifier<bool> feedingModeFlag = ValueNotifier<bool>(false);
+  ValueNotifier<int> waveModeFlag = ValueNotifier<int>(2);
+  ValueNotifier<bool> viewingModeFlag = ValueNotifier<bool>(false);
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
           adaptSize: adaptSize,
           alkalinityTextEditingController: alkalinityTextEditingController,
           calciumTextEditingController: calciumTextEditingController,
-          magnesiumTextEditingController: magnesiumTextEditingController),
+          magnesiumTextEditingController: magnesiumTextEditingController,
+          feedingMode: feedingModeFlag,
+          viewingMode: viewingModeFlag,
+          waveMode: waveModeFlag),
       lightUtilityScreen(
           adaptSize: adaptSize,
           ledBaseStrengthRed: ledBaseStrengthRed,
