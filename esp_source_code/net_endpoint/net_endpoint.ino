@@ -2,11 +2,7 @@
 #include <Firebase_ESP_Client.h>
 #include "addons/RTDBHelper.h"
 #include "addons/TokenHelper.h"
-#include<string>
-
-//program timings
-unsigned long millisTemp = 0;
-unsigned long millisTrigg = 1000;
+#include <string>
 
 // declaration of wifi connection parameters
 String wifiSSID = "Kiran2";
@@ -70,42 +66,43 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currMillis = millis();
   if(wifiStatus == false){
     networkReconnect();
   }else if(wifiStatus == true && signupStatus == false){
     firebaseReconnect();
   }
-  
   // put your main code here, to run repeatedly:
   if(Serial.available()){
     char transCode = '-';
     transCode = Serial.read();
     if(transCode == 'a'){
-      if(pingFirebase() == true){
-        pingArduino('n');
-      }else if(pingFirebase() == false){
-        pingArduino('f');
-      }else if(wifiStatus == false){
-        pingArduino('w');
+      if(signupStatus == true ){
+        pingArduino('i');
+      }else if(signupStatus == false && wifiStatus == true ){
+        pingArduino('h');
+      }else if(wifiStatus == false ){
+        pingArduino('g');
       }
-    }else if(transCode == 'b'){
-      getSensorArrayFromArduino();
+    }else if(transCode == 'b' ){
+      if(signupStatus == true){
+        getSensorArrayFromArduino();
+      }if(checkNetwork() == false){
+        pingArduino('g' );
+      }if(signupStatus == false && wifiStatus == true ){
+        pingArduino('h');
+      }
+      
+    }else if(transCode == 'c'){
+      if(pingFirebase() == true ){
+        fetchNewDeviceData();
+      }
+      if(pingFirebaseDebug()==true ){
+        fetchDebugDataFromFirebase();
+      }
+      
     }
-  }
-  // run every 1 second to ping firebase is there new data on firebase devprof
-  if(currMillis - millisTemp > millisTrigg){
-    millisTemp = currMillis;
-    if(pingFirebase() == true){
-      fetchNewDeviceData();
-    }
-    if(pingFirebaseDebug()==true){
-      fetchDebugDataFromFirebase();
-    }
-    if(checkNetwork() == false){
-      pingArduino('w');
-    }else if(signupStatus == false){
-      pingArduino('f');
+    else{
+      transCode = '-';
     }
   }
 }
@@ -149,20 +146,25 @@ void firebaseReconnect(){
 }
 void fetchNewDeviceData(){
   int arrBuffer [18];
+  bool isDataValid = true;
   for(int x = 0; x<18;x++){
     int tempVals = getIntData("devprof/"+String(x));
-    if(tempVals>=0){
+    if(tempVals>0){
       arrBuffer[x] = tempVals;
+    }else{
+      //received data is not valid
+      isDataValid = false;
     }
   }
-  recordBoolData("devprof/isNewData", false);
-  pingArduino('z');
-  for(int y = 0; y<18; y++){
-    Serial.print(arrBuffer[y]); // Send the array element
-    Serial.print(","); // Send a comma as a separator
+  if(isDataValid == true){
+    recordBoolData("devprof/isNewData", false);
+    pingArduino('j');
+    for(int y = 0; y<18; y++){
+      Serial.print(arrBuffer[y]); // Send the array element
+      Serial.print(","); // Send a comma as a separator
+    }
+    Serial.println();
   }
-  Serial.println();
-
 }
 bool recordBoolData(String entityPath, bool entityData){
   bool isSuccess = false;
@@ -271,7 +273,7 @@ void fetchDebugDataFromFirebase(){
           bool debugStat = fbsData.to<bool>();
           arrBuffer[12] = debugStat?1:0;
         }else{
-          Serial.println("Failed saving data cuz : " + fbsData.errorReason());
+          Serial.println("Failed saving data : " + fbsData.errorReason());
         }
       }
     }
@@ -281,7 +283,7 @@ void fetchDebugDataFromFirebase(){
       ledBlink();
     }
   }
-  pingArduino('x');
+  pingArduino('k');
   for(int y = 0; y<13; y++){
     Serial.print(arrBuffer[y]); // Send the array element
     Serial.print(","); // Send a comma as a separator

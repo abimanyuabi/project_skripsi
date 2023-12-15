@@ -1,26 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/utility/enums.dart';
+import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_slider.dart';
 import 'package:flutter_source_code/widget/default_text.dart';
 
-Widget debugScreen({
-  required AdaptiveSize adaptiveSize,
-  required ValueNotifier<bool> debugModeFlag,
-  required ValueNotifier<int> ledRedStrength,
-  required ValueNotifier<int> ledGreenStrength,
-  required ValueNotifier<int> ledBlueStrength,
-  required ValueNotifier<int> ledWhiteStrength,
-  required ValueNotifier<int> ledFanStrength,
-  required ValueNotifier<int> alkDosage,
-  required ValueNotifier<int> calDosage,
-  required ValueNotifier<int> magDosage,
-  required ValueNotifier<bool> debugWavePumpLeftFlag,
-  required ValueNotifier<bool> debugWavePumpRightFlag,
-  required ValueNotifier<bool> debugReturnPumpFlag,
-  required ValueNotifier<bool> debugTopUpPumpFlag,
-  required ValueNotifier<bool> debugSumpFanFlag,
-}) {
+Widget debugScreen(
+    {required AdaptiveSize adaptiveSize,
+    required ValueNotifier<bool> debugModeFlag,
+    required ValueNotifier<int> ledRedStrength,
+    required ValueNotifier<int> ledGreenStrength,
+    required ValueNotifier<int> ledBlueStrength,
+    required ValueNotifier<int> ledWhiteStrength,
+    required ValueNotifier<int> ledFanStrength,
+    required ValueNotifier<int> alkDosage,
+    required ValueNotifier<int> calDosage,
+    required ValueNotifier<int> magDosage,
+    required ValueNotifier<bool> debugWavePumpLeftFlag,
+    required ValueNotifier<bool> debugWavePumpRightFlag,
+    required ValueNotifier<bool> debugReturnPumpFlag,
+    required ValueNotifier<bool> debugTopUpPumpFlag,
+    required ValueNotifier<bool> debugSumpFanFlag,
+    required AuthViewmodel authProvider,
+    required BuildContext contexts}) {
   return SizedBox(
     width: adaptiveSize.deviceSize.width,
     child: Column(
@@ -599,6 +602,28 @@ Widget debugScreen({
                 ),
               ),
             ),
+          ),
+        ),
+        Center(
+          child: Padding(
+            padding: EdgeInsets.only(
+                top: adaptiveSize.adaptHeight(desiredSize: 20),
+                bottom: adaptiveSize.adaptHeight(desiredSize: 20)),
+            child: SizedBox(
+                height: adaptiveSize.adaptHeight(desiredSize: 28),
+                width: adaptiveSize.adaptWidth(desiredSize: 100),
+                child: actionButton(
+                    buttonColor: Colors.white,
+                    buttonBorderSideColor: Colors.grey,
+                    buttonBorderWidth: 2,
+                    buttonText: "logout",
+                    actionFunc: () async {
+                      await authProvider.authLogout();
+                      if (authProvider.authStatus == AuthStatus.logout) {
+                        Navigator.pushNamed(contexts, '/');
+                      }
+                    },
+                    adaptiveSize: adaptiveSize)),
           ),
         ),
       ],

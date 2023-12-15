@@ -4,6 +4,8 @@ import 'package:flutter_source_code/screen/dosing_utility_screen/dosing_utility_
 import 'package:flutter_source_code/screen/light_utility_screen/light_utility_screen.dart';
 import 'package:flutter_source_code/screen/main_screen/main_screen.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProviders = Provider.of<AuthViewmodel>(context, listen: false);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     List<Widget> listOfBody = [
@@ -110,12 +113,14 @@ class _HomeScreenState extends State<HomeScreen> {
           debugWavePumpRightFlag: debugWavePumpRightFlag,
           debugReturnPumpFlag: debugReturnPumpFlag,
           debugTopUpPumpFlag: debugTopUpPumpFlag,
-          debugSumpFanFlag: debugSumpFanFlag),
+          debugSumpFanFlag: debugSumpFanFlag,
+          authProvider: authProviders,
+          contexts: context),
     ];
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Padding(
-        padding: EdgeInsets.only(top: adaptSize.adaptHeight(desiredSize: 20)),
+        padding: EdgeInsets.only(top: adaptSize.adaptHeight(desiredSize: 60)),
         child: ValueListenableBuilder(
           valueListenable: pageIndex,
           builder: ((context, pageIndexValue, child) => SingleChildScrollView(

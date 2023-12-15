@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "224616910898",
+    "firebase_url": "https://controllercoral-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "controllercoral",
+    "storage_bucket": "controllercoral.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224616910898:android:4970dfc7a37d4e9edfac2b",
+        "android_client_info": {
+          "package_name": "com.example.flutter_source_code"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "224616910898-ibgi6hnh35jk6j20cod1j3hp1m2akci4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKH5eRJAAw8lVogDKP2oCqaNkmpN0l_SY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "224616910898-ibgi6hnh35jk6j20cod1j3hp1m2akci4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

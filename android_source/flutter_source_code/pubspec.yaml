@@ -29,6 +29,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   cloud_firestore: ^4.12.1
+  firebase_core: ^2.24.1
   firebase_auth: ^4.12.0
   firebase_database: ^10.3.2
   syncfusion_flutter_charts: ^23.1.41
@@ -39,6 +40,7 @@ dependencies:
   flutter_svg_provider: ^1.0.3
   build_runner: any
   flutter_gen_runner: any
+  email_validator : any
   provider: ^6.0.4
   intl: ^0.18.1
   flutter:

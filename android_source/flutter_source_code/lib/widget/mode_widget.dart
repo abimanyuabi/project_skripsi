@@ -43,8 +43,9 @@ Widget modeWidget({
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     actionButton1,
-                    const Divider(),
+                    const Spacer(),
                     actionButton2,
+                    const Spacer(),
                     actionButton3 ??
                         const SizedBox(
                           width: 1,
