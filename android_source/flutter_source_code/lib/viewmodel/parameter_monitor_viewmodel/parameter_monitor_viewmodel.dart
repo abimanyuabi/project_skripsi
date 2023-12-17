@@ -5,7 +5,7 @@ import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/enums.dart';
 
 class ParameterViewModel with ChangeNotifier {
-  DataCommStatus _dataCommStatus = DataCommStatus.standby;
+  DataCommStatus dataCommStatus = DataCommStatus.standby;
   String errMessege = '-';
   final flutterSecureStorageObject = FlutterSecureStorage();
   late List<SensorModel> sensorModel;
@@ -16,12 +16,12 @@ class ParameterViewModel with ChangeNotifier {
   String parentDataPath = "aquariums_data_prod";
 
   void resetCommStatus() {
-    _dataCommStatus = DataCommStatus.standby;
+    dataCommStatus = DataCommStatus.standby;
     errMessege = '-';
   }
 
   Future<void> fetchSensorData() async {
-    _dataCommStatus = DataCommStatus.loading;
+    dataCommStatus = DataCommStatus.loading;
     notifyListeners();
     //ensure there is user exist currently
     String? currUser =
@@ -30,7 +30,7 @@ class ParameterViewModel with ChangeNotifier {
       await firebaseRTDBObject
           .child("$parentDataPath/$currUser/water_parameters/waterChemistry");
     } else {
-      _dataCommStatus = DataCommStatus.failed;
+      dataCommStatus = DataCommStatus.failed;
       errMessege = "no user exist";
     }
   }
@@ -40,7 +40,7 @@ class ParameterViewModel with ChangeNotifier {
       required double alkalinityReading,
       required int calciumReading,
       required int magnesiumReading}) async {
-    _dataCommStatus = DataCommStatus.loading;
+    dataCommStatus = DataCommStatus.loading;
     notifyListeners();
     String? currUser =
         await flutterSecureStorageObject.read(key: "curr_user_uid");
@@ -56,10 +56,10 @@ class ParameterViewModel with ChangeNotifier {
           "calcium_reading": calciumReading,
           "magnesium_reading": magnesiumReading
         });
-        _dataCommStatus = DataCommStatus.success;
+        dataCommStatus = DataCommStatus.success;
         notifyListeners();
       } catch (e) {
-        _dataCommStatus = DataCommStatus.failed;
+        dataCommStatus = DataCommStatus.failed;
         errMessege = e.toString();
         notifyListeners();
       }

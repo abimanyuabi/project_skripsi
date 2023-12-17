@@ -42,6 +42,22 @@ class LedProfileModel {
       required this.ledChannelWhiteBaseStrength});
 }
 
+LedProfileModel dummyLedProfile() {
+  return LedProfileModel(
+      ledTimingSunrise: 1,
+      ledTimingPeak: 2,
+      ledTimingSunset: 3,
+      ledTimingNight: 4,
+      ledTimingStrengthMultiplierSunrise: 5,
+      ledTimingStrengthMultiplierPeak: 6,
+      ledTimingStrengthMultiplierSunset: 7,
+      ledTimingStrengthMultiplierNight: 8,
+      ledChannelRedBaseStrength: 9,
+      ledChannelGreenBaseStrength: 1,
+      ledChannelBlueBaseStrength: 2,
+      ledChannelWhiteBaseStrength: 3);
+}
+
 class DosingProfileModel {
   late int doseDivider;
   late double alkalinityDosage;

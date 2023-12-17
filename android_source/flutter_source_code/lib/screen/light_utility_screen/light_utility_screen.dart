@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_slider.dart';
 import 'package:flutter_source_code/widget/default_text.dart';
@@ -19,6 +21,7 @@ Widget lightUtilityScreen({
   required ValueNotifier<int> ledTimingPeak,
   required ValueNotifier<int> ledTimingSunset,
   required ValueNotifier<int> ledTimingNight,
+  required LightUtilityViewModel lightUtilityProviders,
 }) {
   return SizedBox(
     width: adaptSize.deviceSize.width,
@@ -290,7 +293,10 @@ Widget lightUtilityScreen({
                     buttonWidth: 128,
                     buttonHeight: 36,
                     buttonText: "Save Settings",
-                    actionFunc: () {},
+                    actionFunc: () async {
+                      await lightUtilityProviders.createLedProfile(
+                          ledProfileModel: dummyLedProfile());
+                    },
                     adaptiveSize: adaptSize,
                     textColor: Colors.white),
               )

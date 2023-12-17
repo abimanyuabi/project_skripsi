@@ -7,6 +7,7 @@ import 'package:flutter_source_code/screen/light_utility_screen/light_utility_sc
 import 'package:flutter_source_code/screen/main_screen/main_screen.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:provider/provider.dart';
@@ -73,6 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final authProviders = Provider.of<AuthViewmodel>(context, listen: false);
     final parameterProviders =
         Provider.of<ParameterViewModel>(context, listen: false);
+    final lightUtilityProviders =
+        Provider.of<LightUtilityViewModel>(context, listen: false);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     List<Widget> listOfBody = [
@@ -98,7 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ledTimingSunrise: ledTimingSunrise,
           ledTimingPeak: ledTimingPeak,
           ledTimingSunset: ledTimingSunset,
-          ledTimingNight: ledTimingNight),
+          ledTimingNight: ledTimingNight,
+          lightUtilityProviders: lightUtilityProviders),
       dosingUtilityScreen(
           adaptiveSize: adaptSize,
           alkDose: alkDose,
