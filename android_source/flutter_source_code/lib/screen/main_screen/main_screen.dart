@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_source_code/gen/assets.gen.dart';
 import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/chart_widget.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_text.dart';
@@ -16,6 +17,7 @@ Widget mainScreen({
   required ValueNotifier<bool> feedingMode,
   required ValueNotifier<bool> viewingMode,
   required ValueNotifier<int> waveMode,
+  required ParameterViewModel parameterProviders,
 }) {
   return SizedBox(
     width: adaptSize.deviceSize.width,
@@ -292,7 +294,13 @@ Widget mainScreen({
                     child: actionButton(
                       buttonText: "Upload",
                       textColor: Colors.white,
-                      actionFunc: () {},
+                      actionFunc: () async {
+                        await parameterProviders.writeWaterChemistryData(
+                            dateTime: DateTime.now(),
+                            alkalinityReading: 12.9,
+                            calciumReading: 490,
+                            magnesiumReading: 1120);
+                      },
                       adaptiveSize: adaptSize,
                     ),
                   ),

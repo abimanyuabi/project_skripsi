@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/screen/debug_screen/debug_screen.dart';
 import 'package:flutter_source_code/screen/dosing_utility_screen/dosing_utility_screen.dart';
@@ -5,6 +7,8 @@ import 'package:flutter_source_code/screen/light_utility_screen/light_utility_sc
 import 'package:flutter_source_code/screen/main_screen/main_screen.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
+import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -67,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final authProviders = Provider.of<AuthViewmodel>(context, listen: false);
+    final parameterProviders =
+        Provider.of<ParameterViewModel>(context, listen: false);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     List<Widget> listOfBody = [
@@ -77,7 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
           magnesiumTextEditingController: magnesiumTextEditingController,
           feedingMode: feedingModeFlag,
           viewingMode: viewingModeFlag,
-          waveMode: waveModeFlag),
+          waveMode: waveModeFlag,
+          parameterProviders: parameterProviders),
       lightUtilityScreen(
           adaptSize: adaptSize,
           ledBaseStrengthRed: ledBaseStrengthRed,
@@ -120,13 +127,72 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Padding(
-        padding: EdgeInsets.only(top: adaptSize.adaptHeight(desiredSize: 60)),
-        child: ValueListenableBuilder(
-          valueListenable: pageIndex,
-          builder: ((context, pageIndexValue, child) => SingleChildScrollView(
-                physics: BouncingScrollPhysics(),
-                child: listOfBody[pageIndexValue],
-              )),
+        padding: EdgeInsets.only(top: adaptSize.adaptHeight(desiredSize: 40)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(
+                  bottom: adaptSize.adaptHeight(desiredSize: 20),
+                  right: adaptSize.adaptWidth(desiredSize: 34)),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: SizedBox(
+                  width: adaptSize.adaptWidth(desiredSize: 30),
+                  height: adaptSize.adaptHeight(desiredSize: 30),
+                  child: IconButton(
+                      onPressed: () {
+                        showDialog(
+                            context: context,
+                            builder: ((context) {
+                              return AlertDialog(
+                                title: Align(
+                                    alignment: Alignment.center,
+                                    child: const Text("Exit Apps")),
+                                content: SizedBox(
+                                  height:
+                                      adaptSize.adaptHeight(desiredSize: 160),
+                                  width: adaptSize.adaptWidth(desiredSize: 160),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      const Text("are you sure to close apps?"),
+                                      defaultButton(
+                                          textColor: Colors.grey,
+                                          buttonColor: Colors.white,
+                                          buttonBorderSideColor: Colors.grey,
+                                          buttonText: "exit",
+                                          actionFunc: () {
+                                            exit(0);
+                                          },
+                                          prefButtonWidth: adaptSize.adaptWidth(
+                                              desiredSize: 100),
+                                          prefButtonHeight: adaptSize
+                                              .adaptHeight(desiredSize: 28),
+                                          adaptiveSize: adaptSize)
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }));
+                      },
+                      icon: const Icon(Icons.exit_to_app_outlined)),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: adaptSize.pixPreferredHeight - 200,
+              child: ValueListenableBuilder(
+                valueListenable: pageIndex,
+                builder: ((context, pageIndexValue, child) =>
+                    SingleChildScrollView(
+                      physics: BouncingScrollPhysics(),
+                      child: listOfBody[pageIndexValue],
+                    )),
+              ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: SizedBox(
