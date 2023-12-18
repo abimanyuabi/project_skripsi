@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/gen/assets.gen.dart';
+import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
+
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/chart_widget.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
@@ -18,6 +21,7 @@ Widget mainScreen({
   required ValueNotifier<bool> viewingMode,
   required ValueNotifier<int> waveMode,
   required ParameterViewModel parameterProviders,
+  required DeviceModeViewModel deviceModeProviders,
 }) {
   return SizedBox(
     width: adaptSize.deviceSize.width,
@@ -55,28 +59,43 @@ Widget mainScreen({
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                        actionFunc: () {
+                        actionFunc: () async {
                           feedingMode.value = true;
+                          if (viewingMode.value != true) {
+                            await deviceModeProviders.updateDeviceMode(
+                                deviceMode: 1);
+                          }
                         }),
                   ),
                   actionButton2: ValueListenableBuilder(
-                    valueListenable: feedingMode,
-                    builder: (context, feedingModeFlag, child) => defaultButton(
-                      adaptiveSize: adaptSize,
-                      buttonText: "Off",
-                      textColor: feedingModeFlag == false
-                          ? Colors.white
-                          : Colors.black,
-                      actionFunc: () {
-                        feedingMode.value = false;
-                      },
-                      buttonColor: feedingModeFlag == false
-                          ? Colors.red
-                          : Color.fromARGB(255, 200, 200, 200),
-                      prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                      prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                    ),
-                  ),
+                      valueListenable: feedingMode,
+                      builder: ((context, feedingModeFlag, child) {
+                        return ValueListenableBuilder(
+                          valueListenable: viewingMode,
+                          builder: (context, viewingModeFlag, child) =>
+                              defaultButton(
+                            adaptiveSize: adaptSize,
+                            buttonText: "Off",
+                            textColor: feedingModeFlag == false
+                                ? Colors.white
+                                : Colors.black,
+                            actionFunc: () async {
+                              feedingMode.value = false;
+                              if (viewingModeFlag == false) {
+                                await deviceModeProviders.updateDeviceMode(
+                                    deviceMode: 0);
+                              }
+                            },
+                            buttonColor: feedingModeFlag == false
+                                ? Colors.red
+                                : Color.fromARGB(255, 200, 200, 200),
+                            prefButtonHeight:
+                                adaptSize.adaptHeight(desiredSize: 24),
+                            prefButtonWidth:
+                                adaptSize.adaptWidth(desiredSize: 52),
+                          ),
+                        );
+                      })),
                   imageProv: Assets.img.png.feedingMode.provider(),
                 ),
               ),
@@ -113,8 +132,10 @@ Widget mainScreen({
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                        actionFunc: () {
+                        actionFunc: () async {
                           waveMode.value = 1;
+                          await deviceModeProviders.updateWaveMode(
+                              waveMode: waveMode.value);
                         },
                       ),
                     ),
@@ -131,8 +152,10 @@ Widget mainScreen({
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                        actionFunc: () {
+                        actionFunc: () async {
                           waveMode.value = 2;
+                          await deviceModeProviders.updateWaveMode(
+                              waveMode: waveMode.value);
                         },
                       ),
                     ),
@@ -149,8 +172,10 @@ Widget mainScreen({
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                        actionFunc: () {
+                        actionFunc: () async {
                           waveMode.value = 3;
+                          await deviceModeProviders.updateWaveMode(
+                              waveMode: waveMode.value);
                         },
                       ),
                     ),
@@ -191,28 +216,43 @@ Widget mainScreen({
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                        actionFunc: () {
+                        actionFunc: () async {
                           viewingMode.value = true;
+                          if (feedingMode.value != true) {
+                            await deviceModeProviders.updateDeviceMode(
+                                deviceMode: 2);
+                          }
                         }),
                   ),
                   actionButton2: ValueListenableBuilder(
-                    valueListenable: viewingMode,
-                    builder: (context, viewingModeFlag, child) => defaultButton(
-                      adaptiveSize: adaptSize,
-                      buttonText: "Off",
-                      textColor: viewingModeFlag == false
-                          ? Colors.white
-                          : Colors.black,
-                      actionFunc: () {
-                        viewingMode.value = false;
-                      },
-                      buttonColor: viewingModeFlag == false
-                          ? Colors.red
-                          : Color.fromARGB(255, 200, 200, 200),
-                      prefButtonHeight: adaptSize.adaptHeight(desiredSize: 24),
-                      prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
-                    ),
-                  ),
+                      valueListenable: viewingMode,
+                      builder: ((context, viewingModeFlag, child) {
+                        return ValueListenableBuilder(
+                          valueListenable: feedingMode,
+                          builder: (context, feedingModeFlag, child) =>
+                              defaultButton(
+                            adaptiveSize: adaptSize,
+                            buttonText: "Off",
+                            textColor: viewingModeFlag == false
+                                ? Colors.white
+                                : Colors.black,
+                            actionFunc: () async {
+                              viewingMode.value = false;
+                              if (feedingModeFlag == false) {
+                                await deviceModeProviders.updateDeviceMode(
+                                    deviceMode: 0);
+                              }
+                            },
+                            buttonColor: viewingModeFlag == false
+                                ? Colors.red
+                                : Color.fromARGB(255, 200, 200, 200),
+                            prefButtonHeight:
+                                adaptSize.adaptHeight(desiredSize: 24),
+                            prefButtonWidth:
+                                adaptSize.adaptWidth(desiredSize: 52),
+                          ),
+                        );
+                      })),
                   imageProv: Assets.img.png.lightMode.provider(),
                 ),
               ),
@@ -245,7 +285,7 @@ Widget mainScreen({
                     top: adaptSize.adaptHeight(desiredSize: 20),
                   ),
                   child: waterChemistryChartView(
-                      arrayOfParameter: dummyWaterChemistry(),
+                      arrayOfParameter: dummyListWaterChemistry(),
                       chartHeight: 240,
                       chartName: "Water Chemistry"),
                 )
@@ -295,11 +335,12 @@ Widget mainScreen({
                       buttonText: "Upload",
                       textColor: Colors.white,
                       actionFunc: () async {
+                        await parameterProviders.writeSensorData(
+                            sensorReadings: dummySensorModel());
                         await parameterProviders.writeWaterChemistryData(
-                            dateTime: DateTime.now(),
-                            alkalinityReading: 12.9,
-                            calciumReading: 490,
-                            magnesiumReading: 1120);
+                            waterChemistry: dummyWaterChemistry());
+                        await deviceModeProviders.writeDeviceMode(
+                            deviceModeModel: dummyDeviceProfile());
                       },
                       adaptiveSize: adaptSize,
                     ),

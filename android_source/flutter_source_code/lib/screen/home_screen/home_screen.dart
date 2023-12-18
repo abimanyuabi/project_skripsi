@@ -7,6 +7,8 @@ import 'package:flutter_source_code/screen/light_utility_screen/light_utility_sc
 import 'package:flutter_source_code/screen/main_screen/main_screen.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
+import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
@@ -71,11 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProviders = Provider.of<AuthViewmodel>(context, listen: false);
+    final authProviders = Provider.of<AuthViewmodel>(context, listen: true);
     final parameterProviders =
-        Provider.of<ParameterViewModel>(context, listen: false);
+        Provider.of<ParameterViewModel>(context, listen: true);
     final lightUtilityProviders =
-        Provider.of<LightUtilityViewModel>(context, listen: false);
+        Provider.of<LightUtilityViewModel>(context, listen: true);
+    final dosingUtilityProviders =
+        Provider.of<DosingProfileViewModel>(context, listen: true);
+    final deviceModeProviders =
+        Provider.of<DeviceModeViewModel>(context, listen: true);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     List<Widget> listOfBody = [
@@ -87,7 +93,8 @@ class _HomeScreenState extends State<HomeScreen> {
           feedingMode: feedingModeFlag,
           viewingMode: viewingModeFlag,
           waveMode: waveModeFlag,
-          parameterProviders: parameterProviders),
+          parameterProviders: parameterProviders,
+          deviceModeProviders: deviceModeProviders),
       lightUtilityScreen(
           adaptSize: adaptSize,
           ledBaseStrengthRed: ledBaseStrengthRed,
@@ -108,7 +115,8 @@ class _HomeScreenState extends State<HomeScreen> {
           alkDose: alkDose,
           calDose: calDose,
           magDose: magDose,
-          doseDivider: doseDivider),
+          doseDivider: doseDivider,
+          dosingProfileUtilityProviders: dosingUtilityProviders),
       debugScreen(
           adaptiveSize: adaptSize,
           debugModeFlag: debugModeFlag,
@@ -132,71 +140,75 @@ class _HomeScreenState extends State<HomeScreen> {
       resizeToAvoidBottomInset: true,
       body: Padding(
         padding: EdgeInsets.only(top: adaptSize.adaptHeight(desiredSize: 40)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(
-                  bottom: adaptSize.adaptHeight(desiredSize: 20),
-                  right: adaptSize.adaptWidth(desiredSize: 34)),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  width: adaptSize.adaptWidth(desiredSize: 30),
-                  height: adaptSize.adaptHeight(desiredSize: 30),
-                  child: IconButton(
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: ((context) {
-                              return AlertDialog(
-                                title: Align(
-                                    alignment: Alignment.center,
-                                    child: const Text("Exit Apps")),
-                                content: SizedBox(
-                                  height:
-                                      adaptSize.adaptHeight(desiredSize: 160),
-                                  width: adaptSize.adaptWidth(desiredSize: 160),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      const Text("are you sure to close apps?"),
-                                      defaultButton(
-                                          textColor: Colors.grey,
-                                          buttonColor: Colors.white,
-                                          buttonBorderSideColor: Colors.grey,
-                                          buttonText: "exit",
-                                          actionFunc: () {
-                                            exit(0);
-                                          },
-                                          prefButtonWidth: adaptSize.adaptWidth(
-                                              desiredSize: 100),
-                                          prefButtonHeight: adaptSize
-                                              .adaptHeight(desiredSize: 28),
-                                          adaptiveSize: adaptSize)
-                                    ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                    bottom: adaptSize.adaptHeight(desiredSize: 20),
+                    right: adaptSize.adaptWidth(desiredSize: 34)),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: SizedBox(
+                    width: adaptSize.adaptWidth(desiredSize: 30),
+                    height: adaptSize.adaptHeight(desiredSize: 30),
+                    child: IconButton(
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: ((context) {
+                                return AlertDialog(
+                                  title: Align(
+                                      alignment: Alignment.center,
+                                      child: const Text("Exit Apps")),
+                                  content: SizedBox(
+                                    height:
+                                        adaptSize.adaptHeight(desiredSize: 160),
+                                    width:
+                                        adaptSize.adaptWidth(desiredSize: 160),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        const Text(
+                                            "are you sure to close apps?"),
+                                        defaultButton(
+                                            textColor: Colors.grey,
+                                            buttonColor: Colors.white,
+                                            buttonBorderSideColor: Colors.grey,
+                                            buttonText: "exit",
+                                            actionFunc: () {
+                                              exit(0);
+                                            },
+                                            prefButtonWidth: adaptSize
+                                                .adaptWidth(desiredSize: 100),
+                                            prefButtonHeight: adaptSize
+                                                .adaptHeight(desiredSize: 28),
+                                            adaptiveSize: adaptSize)
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }));
-                      },
-                      icon: const Icon(Icons.exit_to_app_outlined)),
+                                );
+                              }));
+                        },
+                        icon: const Icon(Icons.exit_to_app_outlined)),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(
-              height: adaptSize.pixPreferredHeight - 200,
-              child: ValueListenableBuilder(
-                valueListenable: pageIndex,
-                builder: ((context, pageIndexValue, child) =>
-                    SingleChildScrollView(
-                      physics: BouncingScrollPhysics(),
-                      child: listOfBody[pageIndexValue],
-                    )),
+              SizedBox(
+                height: adaptSize.pixPreferredHeight - 200,
+                child: ValueListenableBuilder(
+                  valueListenable: pageIndex,
+                  builder: ((context, pageIndexValue, child) =>
+                      SingleChildScrollView(
+                        physics: BouncingScrollPhysics(),
+                        child: listOfBody[pageIndexValue],
+                      )),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: SizedBox(

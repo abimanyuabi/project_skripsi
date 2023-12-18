@@ -10,6 +10,14 @@ class SensorModel {
       required this.createdAt});
 }
 
+SensorModel dummySensorModel() {
+  return SensorModel(
+      phReadings: 8.0,
+      tempReadings: 29.0,
+      waterUsage: 200,
+      createdAt: DateTime.now());
+}
+
 class WaterChemistryModel {
   late double alkalinity;
   late double calcium;
@@ -20,6 +28,11 @@ class WaterChemistryModel {
       required this.calcium,
       required this.magnesium,
       required this.dateTime});
+}
+
+WaterChemistryModel dummyWaterChemistry() {
+  return WaterChemistryModel(
+      alkalinity: 8.0, calcium: 420, magnesium: 550, dateTime: DateTime.now());
 }
 
 List<SensorModel> dummySensor() {
@@ -37,7 +50,7 @@ List<SensorModel> dummySensor() {
   ];
 }
 
-List<WaterChemistryModel> dummyWaterChemistry() {
+List<WaterChemistryModel> dummyListWaterChemistry() {
   return [
     WaterChemistryModel(
       alkalinity: 8.7,

@@ -5,6 +5,8 @@ import 'package:flutter_source_code/screen/auth_screen/register_screen.dart';
 import 'package:flutter_source_code/screen/home_screen/home_screen.dart';
 import 'package:flutter_source_code/screen/splashscreen/splashscreen.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
+import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +28,9 @@ class MainClass extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewmodel()),
         ChangeNotifierProvider(create: (_) => ParameterViewModel()),
-        ChangeNotifierProvider(create: (_) => LightUtilityViewModel())
+        ChangeNotifierProvider(create: (_) => LightUtilityViewModel()),
+        ChangeNotifierProvider(create: (_) => DosingProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => DeviceModeViewModel())
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,

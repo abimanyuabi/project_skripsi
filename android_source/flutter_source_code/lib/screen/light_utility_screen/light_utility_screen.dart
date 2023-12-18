@@ -295,7 +295,27 @@ Widget lightUtilityScreen({
                     buttonText: "Save Settings",
                     actionFunc: () async {
                       await lightUtilityProviders.createLedProfile(
-                          ledProfileModel: dummyLedProfile());
+                          ledProfileModel: LedProfileModel(
+                              ledTimingSunrise: ledTimingSunrise.value,
+                              ledTimingPeak: ledTimingPeak.value,
+                              ledTimingSunset: ledTimingSunset.value,
+                              ledTimingNight: ledTimingNight.value,
+                              ledTimingStrengthMultiplierSunrise:
+                                  ledMultiplierSunrise.value,
+                              ledTimingStrengthMultiplierPeak:
+                                  ledMultiplierPeak.value,
+                              ledTimingStrengthMultiplierSunset:
+                                  ledMultiplierSunset.value,
+                              ledTimingStrengthMultiplierNight:
+                                  ledMultiplierNight.value,
+                              ledChannelRedBaseStrength:
+                                  ledBaseStrengthRed.value,
+                              ledChannelGreenBaseStrength:
+                                  ledBaseStrengthGreen.value,
+                              ledChannelBlueBaseStrength:
+                                  ledBaseStrengthBlue.value,
+                              ledChannelWhiteBaseStrength:
+                                  ledBaseStrengthWhite.value));
                     },
                     adaptiveSize: adaptSize,
                     textColor: Colors.white),

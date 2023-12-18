@@ -46,6 +46,16 @@ class AuthViewmodel with ChangeNotifier {
     try {
       await firebaseAuthObject.createUserWithEmailAndPassword(
           email: email.trim(), password: password.trim());
+      if (firebaseAuthObject.currentUser != null) {
+        const secureStorageObject = FlutterSecureStorage();
+        User currUser = firebaseAuthObject.currentUser!;
+        await secureStorageObject.write(
+            key: "curr_user_email", value: currUser.email);
+        await secureStorageObject.write(
+            key: "curr_user_pass", value: password.trim());
+        await secureStorageObject.write(
+            key: "curr_user_uid", value: currUser.uid);
+      }
       authStatus = AuthStatus.success;
       notifyListeners();
     } catch (e) {
@@ -70,6 +80,7 @@ class AuthViewmodel with ChangeNotifier {
     if (firebaseAuthObject.currentUser == null) {
       await secureStorageObject.delete(key: "curr_user_email");
       await secureStorageObject.delete(key: "curr_user_pass");
+      await secureStorageObject.delete(key: "curr_user_uid");
       authStatus = AuthStatus.logout;
     }
     notifyListeners();

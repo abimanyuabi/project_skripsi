@@ -1,7 +1,7 @@
 class DeviceProfileModel {
   late LedProfileModel ledProfile;
   late DosingProfileModel dosingProfile;
-  late DeviceMode deviceMode;
+  late DeviceModeModel deviceMode;
   DeviceProfileModel(
       {required this.ledProfile,
       required this.dosingProfile,
@@ -60,9 +60,9 @@ LedProfileModel dummyLedProfile() {
 
 class DosingProfileModel {
   late int doseDivider;
-  late double alkalinityDosage;
-  late double calciumDosage;
-  late double magnesiumDosage;
+  late int alkalinityDosage;
+  late int calciumDosage;
+  late int magnesiumDosage;
   DosingProfileModel(
       {required this.doseDivider,
       required this.alkalinityDosage,
@@ -70,8 +70,20 @@ class DosingProfileModel {
       required this.magnesiumDosage});
 }
 
-class DeviceMode {
+DosingProfileModel dummyDosingProfile() {
+  return DosingProfileModel(
+      doseDivider: 24,
+      alkalinityDosage: 1,
+      calciumDosage: 10,
+      magnesiumDosage: 25);
+}
+
+class DeviceModeModel {
   late int deviceMode;
   late int waveFormMode;
-  DeviceMode({required this.deviceMode, required this.waveFormMode});
+  DeviceModeModel({required this.deviceMode, required this.waveFormMode});
+}
+
+DeviceModeModel dummyDeviceProfile() {
+  return DeviceModeModel(deviceMode: 2, waveFormMode: 1);
 }

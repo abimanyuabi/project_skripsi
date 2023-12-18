@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/widget/chart_widget.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_grid_picker.dart';
@@ -13,6 +15,7 @@ Widget dosingUtilityScreen({
   required ValueNotifier<int> calDose,
   required ValueNotifier<int> magDose,
   required ValueNotifier<int> doseDivider,
+  required DosingProfileViewModel dosingProfileUtilityProviders,
 }) {
   return SizedBox(
     width: adaptiveSize.deviceSize.width,
@@ -40,7 +43,7 @@ Widget dosingUtilityScreen({
                         top: adaptiveSize.adaptHeight(desiredSize: 20),
                       ),
                       child: waterChemistryChartView(
-                          arrayOfParameter: dummyWaterChemistry(),
+                          arrayOfParameter: dummyListWaterChemistry(),
                           chartHeight: 204),
                     )
                   ],
@@ -67,7 +70,7 @@ Widget dosingUtilityScreen({
                     ),
                     child: defaultSlider(
                         sliderName: "Alkalinity",
-                        maxValue: 1000,
+                        maxValue: 10,
                         sliderValue: alkDose,
                         adaptiveSize: adaptiveSize,
                         suffixText: "Dkh"),
@@ -147,7 +150,16 @@ Widget dosingUtilityScreen({
                 buttonWidth: 128,
                 buttonHeight: 36,
                 buttonText: "Save Settings",
-                actionFunc: () {},
+                actionFunc: () async {
+                  await dosingProfileUtilityProviders.updateDosingProfile(
+                      dosingProfileModel: DosingProfileModel(
+                          doseDivider: doseDivider.value,
+                          alkalinityDosage: alkDose.value,
+                          calciumDosage: calDose.value,
+                          magnesiumDosage: magDose.value));
+                  await dosingProfileUtilityProviders
+                      .updateIsNewDataDeviceProfile();
+                },
                 adaptiveSize: adaptiveSize,
                 textColor: Colors.white),
           ),
