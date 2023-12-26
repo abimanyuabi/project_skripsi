@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/screen/debug_screen/debug_screen.dart';
 import 'package:flutter_source_code/screen/dosing_utility_screen/dosing_utility_screen.dart';
@@ -7,12 +8,15 @@ import 'package:flutter_source_code/screen/light_utility_screen/light_utility_sc
 import 'package:flutter_source_code/screen/main_screen/main_screen.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/debug_viewmodel/debug_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:provider/provider.dart';
+
+bool isfirstBuild = true;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,12 +26,41 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    final parameterProviders =
+        Provider.of<ParameterViewModel>(context, listen: false);
+
+    // Replace 'your_path/your_field' with the actual path to your field in the database
+    final databaseReference = FirebaseDatabase.instance.ref().child(
+        "aquariums_data_prod/${parameterProviders.currUserId}/water_parameters/sensor_readings");
+    // Set up the listener
+    databaseReference.onValue.listen((event) {
+      // Handle the event, event.snapshot.value contains the new data
+      List listenerResponse = event.snapshot.value as List;
+      if (isfirstBuild == false) {
+        parameterProviders.recordSensorLogFirestore(
+            ph: listenerResponse[1],
+            temp: listenerResponse[2],
+            waterConsumption: listenerResponse[3]);
+      }
+      parameterProviders.getSensorLogFirestore();
+      isfirstBuild = false;
+    });
+  }
+
   //main screen
   TextEditingController alkalinityTextEditingController =
       TextEditingController();
   TextEditingController calciumTextEditingController = TextEditingController();
   TextEditingController magnesiumTextEditingController =
       TextEditingController();
+  TextEditingController salinityTextEditingController = TextEditingController();
+  ValueNotifier<DateTime?> pickedWaterTestDate =
+      ValueNotifier<DateTime?>(DateTime.now());
 
   //divider
   ValueNotifier<int> pageIndex = ValueNotifier<int>(0);
@@ -72,6 +105,16 @@ class _HomeScreenState extends State<HomeScreen> {
   ValueNotifier<bool> viewingModeFlag = ValueNotifier<bool>(false);
 
   @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the widget tree.
+    alkalinityTextEditingController.dispose();
+    calciumTextEditingController.dispose();
+    magnesiumTextEditingController.dispose();
+    salinityTextEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProviders = Provider.of<AuthViewmodel>(context, listen: true);
     final parameterProviders =
@@ -82,19 +125,25 @@ class _HomeScreenState extends State<HomeScreen> {
         Provider.of<DosingProfileViewModel>(context, listen: true);
     final deviceModeProviders =
         Provider.of<DeviceModeViewModel>(context, listen: true);
+    final debugModeProviders =
+        Provider.of<DebugViewModel>(context, listen: true);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     List<Widget> listOfBody = [
       mainScreen(
+          formKey: _formKey,
           adaptSize: adaptSize,
           alkalinityTextEditingController: alkalinityTextEditingController,
           calciumTextEditingController: calciumTextEditingController,
           magnesiumTextEditingController: magnesiumTextEditingController,
+          salinityTextEditingController: salinityTextEditingController,
           feedingMode: feedingModeFlag,
           viewingMode: viewingModeFlag,
           waveMode: waveModeFlag,
           parameterProviders: parameterProviders,
-          deviceModeProviders: deviceModeProviders),
+          deviceModeProviders: deviceModeProviders,
+          pickedParameterTestDate: pickedWaterTestDate,
+          context: context),
       lightUtilityScreen(
           adaptSize: adaptSize,
           ledBaseStrengthRed: ledBaseStrengthRed,
@@ -134,8 +183,35 @@ class _HomeScreenState extends State<HomeScreen> {
           debugTopUpPumpFlag: debugTopUpPumpFlag,
           debugSumpFanFlag: debugSumpFanFlag,
           authProvider: authProviders,
-          contexts: context),
+          contexts: context,
+          debugProviders: debugModeProviders),
     ];
+
+    ledTimingSunrise.value =
+        lightUtilityProviders.currLedProfileModels.ledTimingSunrise;
+    ledTimingPeak.value =
+        lightUtilityProviders.currLedProfileModels.ledTimingPeak;
+    ledTimingSunset.value =
+        lightUtilityProviders.currLedProfileModels.ledTimingSunset;
+    ledTimingNight.value =
+        lightUtilityProviders.currLedProfileModels.ledTimingNight;
+    ledMultiplierSunrise.value = lightUtilityProviders
+        .currLedProfileModels.ledTimingStrengthMultiplierSunrise;
+    ledMultiplierPeak.value = lightUtilityProviders
+        .currLedProfileModels.ledTimingStrengthMultiplierPeak;
+    ledMultiplierSunset.value = lightUtilityProviders
+        .currLedProfileModels.ledTimingStrengthMultiplierSunset;
+    ledMultiplierNight.value = lightUtilityProviders
+        .currLedProfileModels.ledTimingStrengthMultiplierNight;
+    ledBaseStrengthRed.value =
+        lightUtilityProviders.currLedProfileModels.ledChannelRedBaseStrength;
+    ledBaseStrengthGreen.value =
+        lightUtilityProviders.currLedProfileModels.ledChannelGreenBaseStrength;
+    ledBaseStrengthBlue.value =
+        lightUtilityProviders.currLedProfileModels.ledChannelBlueBaseStrength;
+    ledBaseStrengthWhite.value =
+        lightUtilityProviders.currLedProfileModels.ledChannelWhiteBaseStrength;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Padding(
@@ -159,9 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               context: context,
                               builder: ((context) {
                                 return AlertDialog(
-                                  title: Align(
+                                  title: const Align(
                                       alignment: Alignment.center,
-                                      child: const Text("Exit Apps")),
+                                      child: Text("Exit Apps")),
                                   content: SizedBox(
                                     height:
                                         adaptSize.adaptHeight(desiredSize: 160),
@@ -202,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   valueListenable: pageIndex,
                   builder: ((context, pageIndexValue, child) =>
                       SingleChildScrollView(
-                        physics: BouncingScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         child: listOfBody[pageIndexValue],
                       )),
                 ),
@@ -216,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ValueListenableBuilder(
           valueListenable: pageIndex,
           builder: (context, value, child) => BottomNavigationBar(
+            backgroundColor: Colors.amber,
             currentIndex: value,
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(icon: Icon(Icons.home), label: "home"),
@@ -227,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.settings), label: "debug")
             ],
             selectedItemColor: Colors.blue,
-            unselectedItemColor: Color.fromARGB(255, 112, 112, 112),
+            unselectedItemColor: const Color.fromARGB(255, 112, 112, 112),
             onTap: ((int newIndex) {
               pageIndex.value = newIndex;
             }),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class DeviceProfileModel {
   late LedProfileModel ledProfile;
   late DosingProfileModel dosingProfile;
@@ -63,11 +65,13 @@ class DosingProfileModel {
   late int alkalinityDosage;
   late int calciumDosage;
   late int magnesiumDosage;
+  DateTime? dateTime;
   DosingProfileModel(
       {required this.doseDivider,
       required this.alkalinityDosage,
       required this.calciumDosage,
-      required this.magnesiumDosage});
+      required this.magnesiumDosage,
+      this.dateTime});
 }
 
 DosingProfileModel dummyDosingProfile() {
@@ -76,6 +80,16 @@ DosingProfileModel dummyDosingProfile() {
       alkalinityDosage: 1,
       calciumDosage: 10,
       magnesiumDosage: 25);
+}
+
+DosingProfileModel dosingProfileFromMap(
+    {required QueryDocumentSnapshot<Map<String, dynamic>> maps}) {
+  return DosingProfileModel(
+      doseDivider: maps["divider"],
+      alkalinityDosage: maps["alkalinity"],
+      calciumDosage: maps["calcium"],
+      magnesiumDosage: maps["magnesium"],
+      dateTime: (maps["timestamp"] as Timestamp).toDate());
 }
 
 class DeviceModeModel {

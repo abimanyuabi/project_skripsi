@@ -1,10 +1,10 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/screen/auth_screen/login_screen.dart';
-import 'package:flutter_source_code/screen/home_screen/home_screen.dart';
-
+import 'package:flutter_source_code/screen/splashscreen/splashscreen_load.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +16,14 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final parameterProviders =
+        Provider.of<ParameterViewModel>(context, listen: false);
+    parameterProviders.validateUserExist();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthViewmodel>(context);
@@ -34,11 +42,11 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: SvgPicture.asset("assets/img/svg/logo.svg"),
                   ),
                 ),
-                nextScreen: HomeScreen(),
+                nextScreen: const SplashScreenLoad(),
               ),
             );
           } else {
-            return LoginScreen();
+            return const LoginScreen();
           }
         }));
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/utility/enums.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/debug_viewmodel/debug_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_slider.dart';
 import 'package:flutter_source_code/widget/default_text.dart';
@@ -23,7 +24,8 @@ Widget debugScreen(
     required ValueNotifier<bool> debugTopUpPumpFlag,
     required ValueNotifier<bool> debugSumpFanFlag,
     required AuthViewmodel authProvider,
-    required BuildContext contexts}) {
+    required BuildContext contexts,
+    required DebugViewModel debugProviders}) {
   return SizedBox(
     width: adaptiveSize.deviceSize.width,
     child: Column(
@@ -52,8 +54,16 @@ Widget debugScreen(
                           inactiveTrackColor:
                               const Color.fromARGB(60, 112, 112, 112),
                           value: debugFlagValue,
-                          onChanged: (value) =>
-                              debugModeFlag.value = !debugFlagValue),
+                          onChanged: (value) async {
+                            debugModeFlag.value = value;
+                            if (!debugFlagValue) {
+                              await debugProviders
+                                  .updateDebugFlag(!debugFlagValue);
+                            } else {
+                              await debugProviders
+                                  .updateDebugFlag(!debugFlagValue);
+                            }
+                          }),
                       headingText1(
                           text: debugFlagValue == true ? ": On" : ": Off",
                           adaptiveSize: adaptiveSize,
@@ -175,7 +185,14 @@ Widget debugScreen(
                               buttonBorderSideColor: Colors.grey,
                               buttonBorderWidth: 2,
                               buttonText: "Calibrate",
-                              actionFunc: () {},
+                              actionFunc: () async {
+                                await debugProviders.updateDebugLed(
+                                    ledRedStrength.value,
+                                    ledGreenStrength.value,
+                                    ledBlueStrength.value,
+                                    ledWhiteStrength.value,
+                                    ledFanStrength.value);
+                              },
                               adaptiveSize: adaptiveSize)),
                     ),
                   ],
@@ -272,7 +289,12 @@ Widget debugScreen(
                               buttonBorderSideColor: Colors.grey,
                               buttonBorderWidth: 2,
                               buttonText: "Calibrate",
-                              actionFunc: () {},
+                              actionFunc: () async {
+                                await debugProviders.updateDebugDosing(
+                                    alkDosage.value,
+                                    calDosage.value,
+                                    magDosage.value);
+                              },
                               adaptiveSize: adaptiveSize)),
                     ),
                   ],
@@ -595,7 +617,14 @@ Widget debugScreen(
                               buttonBorderSideColor: Colors.grey,
                               buttonBorderWidth: 2,
                               buttonText: "Calibrate",
-                              actionFunc: () {},
+                              actionFunc: () async {
+                                await debugProviders.updateDebugPump(
+                                    debugWavePumpLeftFlag.value,
+                                    debugWavePumpRightFlag.value,
+                                    debugReturnPumpFlag.value,
+                                    debugTopUpPumpFlag.value,
+                                    debugSumpFanFlag.value);
+                              },
                               adaptiveSize: adaptiveSize)),
                     ),
                   ],

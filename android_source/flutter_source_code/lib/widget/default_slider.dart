@@ -28,8 +28,9 @@ Widget defaultSlider(
               builder: (context, listenableVal, child) => SliderTheme(
                 data: SliderThemeData(
                     trackHeight: adaptiveSize.adaptHeight(desiredSize: 1),
-                    activeTrackColor: Color.fromARGB(200, 112, 112, 112),
-                    inactiveTrackColor: Color.fromARGB(125, 112, 112, 112),
+                    activeTrackColor: const Color.fromARGB(200, 112, 112, 112),
+                    inactiveTrackColor:
+                        const Color.fromARGB(125, 112, 112, 112),
                     thumbColor: Colors.grey,
                     thumbShape: RoundSliderThumbShape(
                         enabledThumbRadius:

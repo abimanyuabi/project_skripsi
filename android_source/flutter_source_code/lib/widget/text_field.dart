@@ -13,10 +13,22 @@ Widget defaultTextField(
   return SizedBox(
     width: adaptiveSize.adaptWidth(desiredSize: 120),
     child: TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: (fieldVal) {
+        return fieldVal == null ||
+                fieldVal == "" ||
+                (double.tryParse(fieldVal) == null
+                        ? 0.0
+                        : double.parse(fieldVal)) <
+                    0
+            ? "enter valid value"
+            : null;
+      },
       inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       controller: textEditingController,
       onChanged: (value) =>
-          int.parse(textEditingController.text) > (maxValue ?? 3)
+          (double.tryParse(value) == null ? 0.0 : double.parse(value)) >
+                  (maxValue ?? 3)
               ? textEditingController.text = maxValue.toString()
               : textEditingController,
       maxLength: maxLength,

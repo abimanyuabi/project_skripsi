@@ -49,7 +49,7 @@ Widget customPicker(
                                 ? notifyableValue.value = 0
                                 : notifyableValue.value =
                                     notifyableValue.value + 1,
-                            icon: Icon(Icons.arrow_drop_up),
+                            icon: const Icon(Icons.arrow_drop_up),
                             iconSize: adaptiveSize.adaptWidth(desiredSize: 22),
                           ),
                         ),
@@ -61,7 +61,7 @@ Widget customPicker(
                                 ? notifyableValue.value = maxValue.toInt()
                                 : notifyableValue.value =
                                     notifyableValue.value - 1,
-                            icon: Icon(Icons.arrow_drop_down),
+                            icon: const Icon(Icons.arrow_drop_down),
                             iconSize: adaptiveSize.adaptWidth(desiredSize: 22),
                           ),
                         ),

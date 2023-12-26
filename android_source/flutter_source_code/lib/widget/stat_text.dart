@@ -9,7 +9,9 @@ Widget statTextBox1(
     required String parameterScale,
     required AdaptiveSize adaptiveSize,
     required TextEditingController textEditingController,
-    DateTime? createdAt,
+    required ValueNotifier<DateTime?> pickedDate,
+    required BuildContext context,
+    required bool datePickerAttachment,
     int? maxValue}) {
   return SizedBox(
     width: adaptiveSize.adaptWidth(desiredSize: 320),
@@ -28,13 +30,6 @@ Widget statTextBox1(
               adaptiveSize: adaptiveSize,
               textEditingController: textEditingController,
               fieldSuffix: parameterScale),
-        ),
-        const Spacer(),
-        IconButton(
-          padding: const EdgeInsets.all(0),
-          iconSize: adaptiveSize.adaptWidth(desiredSize: 24),
-          onPressed: () {},
-          icon: const Icon(Icons.date_range),
         ),
       ],
     ),

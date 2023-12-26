@@ -17,13 +17,15 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  TextEditingController _registerEmailController = TextEditingController();
-  TextEditingController _registerPasswordController = TextEditingController();
-  ValueNotifier<bool> _isPasswordVisible = ValueNotifier<bool>(false);
+  final TextEditingController _registerEmailController =
+      TextEditingController();
+  final TextEditingController _registerPasswordController =
+      TextEditingController();
+  final ValueNotifier<bool> _isPasswordVisible = ValueNotifier<bool>(false);
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
-    final _authProvider = Provider.of<AuthViewmodel>(context);
+    final authProvider = Provider.of<AuthViewmodel>(context);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     return Scaffold(
@@ -38,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Spacer(),
+                  const Spacer(),
                   SizedBox(
                     width: adaptSize.adaptWidth(desiredSize: 260),
                     child: TextFormField(
@@ -61,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   SizedBox(
                     width: adaptSize.adaptWidth(desiredSize: 260),
                     child: ValueListenableBuilder(
@@ -106,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }),
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -125,24 +127,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 final isValid =
                                     _formKey.currentState!.validate();
                                 if (isValid) {
-                                  await _authProvider.authRegister(
+                                  await authProvider.authRegister(
                                       email: _registerEmailController.text,
                                       password:
                                           _registerPasswordController.text);
-                                  if (_authProvider.authStatus ==
+                                  if (authProvider.authStatus ==
                                       AuthStatus.success) {
                                     Navigator.pop(context);
-                                  } else if (_authProvider.authStatus ==
+                                  } else if (authProvider.authStatus ==
                                       AuthStatus.failed) {
                                     showDialog(
                                       context: context,
                                       builder: ((context) {
                                         return AlertDialog(
-                                          title: Center(
-                                              child: const Text('login error')),
+                                          title: const Center(
+                                              child: Text('login error')),
                                           content: Text(
-                                            _authProvider.failReason,
-                                            style: TextStyle(
+                                            authProvider.failReason,
+                                            style: const TextStyle(
                                                 fontWeight: FontWeight.w400),
                                           ),
                                           actions: <Widget>[
@@ -162,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     builder: ((context) {
                                       return AlertDialog(
                                         title: const Center(
-                                            child: const Text('login error')),
+                                            child: Text('login error')),
                                         content: const Text(
                                           "invalid form",
                                           style: TextStyle(
@@ -171,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         actions: <Widget>[
                                           TextButton(
                                             onPressed: (() {
-                                              _authProvider
+                                              authProvider
                                                   .resetConnectionMessege();
                                               Navigator.pop(context, 'OK');
                                             }),
@@ -190,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               adaptiveSize: adaptSize),
                         ),
                       ),
-                      Spacer(),
+                      const Spacer(),
                       Padding(
                         padding: EdgeInsets.only(
                           right: adaptSize.adaptWidth(desiredSize: 40),
@@ -215,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ],
                   ),
-                  Spacer(),
+                  const Spacer(),
                 ],
               ),
             ),

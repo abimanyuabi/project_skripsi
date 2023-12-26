@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/model/device_profile_model.dart';
-import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/widget/chart_widget.dart';
@@ -24,7 +23,7 @@ Widget dosingUtilityScreen({
         Center(
           child: SizedBox(
             width: adaptiveSize.adaptWidth(desiredSize: 360),
-            height: adaptiveSize.currHeight() / 3,
+            height: adaptiveSize.currHeight() / 3 * 2 + 100,
             child: Card(
               elevation: 4,
               child: Padding(
@@ -33,21 +32,12 @@ Widget dosingUtilityScreen({
                     bottom: adaptiveSize.adaptHeight(desiredSize: 20),
                     left: adaptiveSize.adaptWidth(desiredSize: 20),
                     right: adaptiveSize.adaptWidth(desiredSize: 20)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    headingText1(
-                        text: "Dosing History", adaptiveSize: adaptiveSize),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: adaptiveSize.adaptHeight(desiredSize: 20),
-                      ),
-                      child: waterChemistryChartView(
-                          arrayOfParameter: dummyListWaterChemistry(),
-                          chartHeight: 204),
-                    )
-                  ],
-                ),
+                child: dosingHistoryChartview(
+                    inpDosingProfileModels:
+                        dosingProfileUtilityProviders.listOfDosingHistorys,
+                    adaptiveSize: adaptiveSize,
+                    chartWidth: 260,
+                    chartHeight: 400),
               ),
             ),
           ),
@@ -152,7 +142,7 @@ Widget dosingUtilityScreen({
                 buttonText: "Save Settings",
                 actionFunc: () async {
                   await dosingProfileUtilityProviders.updateDosingProfile(
-                      dosingProfileModel: DosingProfileModel(
+                      inpDosingProfileModel: DosingProfileModel(
                           doseDivider: doseDivider.value,
                           alkalinityDosage: alkDose.value,
                           calciumDosage: calDose.value,

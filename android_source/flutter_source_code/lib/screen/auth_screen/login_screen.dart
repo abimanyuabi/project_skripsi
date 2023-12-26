@@ -24,14 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _authProvider = Provider.of<AuthViewmodel>(context);
+    final authProvider = Provider.of<AuthViewmodel>(context);
     AdaptiveSize adaptSize =
         AdaptiveSize(deviceSize: MediaQuery.of(context).size);
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Center(
         child: SingleChildScrollView(
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           child: SizedBox(
             width: adaptSize.adaptWidth(desiredSize: 320),
             height: adaptSize.adaptHeight(desiredSize: 320),
@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Spacer(),
+                    const Spacer(),
                     SizedBox(
                       width: adaptSize.adaptWidth(desiredSize: 260),
                       child: TextFormField(
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     SizedBox(
                       width: adaptSize.adaptWidth(desiredSize: 260),
                       child: ValueListenableBuilder(
@@ -146,41 +146,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final isValid =
                                       _formKey.currentState!.validate();
                                   if (isValid) {
-                                    await _authProvider.authLogin(
+                                    await authProvider.authLogin(
                                         email: _emailController.text,
                                         password: _passwordController.text);
-                                    if (_authProvider.authStatus ==
-                                        AuthStatus.failed) {
-                                      showDialog(
-                                        context: context,
-                                        builder: ((context) {
-                                          return AlertDialog(
-                                            title: Center(
-                                                child:
-                                                    const Text('login error')),
-                                            content: Text(
-                                              _authProvider.failReason,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                    context, 'OK'),
-                                                child: const Text('OK'),
-                                              ),
-                                            ],
-                                          );
-                                        }),
-                                      );
-                                    }
                                   } else {
                                     showDialog(
                                       context: context,
                                       builder: ((context) {
                                         return AlertDialog(
                                           title: const Center(
-                                              child: const Text('login error')),
+                                              child: Text('login error')),
                                           content: const Text(
                                             "invalid form",
                                             style: TextStyle(
@@ -189,10 +164,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                           actions: <Widget>[
                                             TextButton(
                                               onPressed: (() {
-                                                _authProvider
+                                                authProvider
                                                     .resetConnectionMessege();
                                                 Navigator.pop(context, 'OK');
                                               }),
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        );
+                                      }),
+                                    );
+                                  }
+                                  if (authProvider.authStatus ==
+                                      AuthStatus.failed) {
+                                    showDialog(
+                                      context: context,
+                                      builder: ((context) {
+                                        return AlertDialog(
+                                          title: const Center(
+                                              child: Text('login error')),
+                                          content: Text(
+                                            authProvider.failReason,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w400),
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, 'OK'),
                                               child: const Text('OK'),
                                             ),
                                           ],
@@ -208,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 adaptiveSize: adaptSize),
                           ),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         Padding(
                           padding: EdgeInsets.only(
                             right: adaptSize.adaptWidth(desiredSize: 40),
@@ -233,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         )
                       ],
                     ),
-                    Spacer()
+                    const Spacer()
                   ],
                 ),
               ),

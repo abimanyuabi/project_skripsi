@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/utility/enums.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_slider.dart';
@@ -316,6 +317,39 @@ Widget lightUtilityScreen({
                                   ledBaseStrengthBlue.value,
                               ledChannelWhiteBaseStrength:
                                   ledBaseStrengthWhite.value));
+                      await lightUtilityProviders.getLedProfile();
+                      if (lightUtilityProviders.dataCommStatus ==
+                          DataCommStatus.success) {
+                        lightUtilityProviders.resetCommStatus();
+                        ledTimingSunrise.value = lightUtilityProviders
+                            .currLedProfileModels.ledTimingSunrise;
+                        ledTimingPeak.value = lightUtilityProviders
+                            .currLedProfileModels.ledTimingPeak;
+                        ledTimingSunset.value = lightUtilityProviders
+                            .currLedProfileModels.ledTimingSunset;
+                        ledTimingNight.value = lightUtilityProviders
+                            .currLedProfileModels.ledTimingNight;
+                        ledMultiplierSunrise.value = lightUtilityProviders
+                            .currLedProfileModels
+                            .ledTimingStrengthMultiplierSunrise;
+                        ledMultiplierPeak.value = lightUtilityProviders
+                            .currLedProfileModels
+                            .ledTimingStrengthMultiplierPeak;
+                        ledMultiplierSunset.value = lightUtilityProviders
+                            .currLedProfileModels
+                            .ledTimingStrengthMultiplierSunset;
+                        ledMultiplierNight.value = lightUtilityProviders
+                            .currLedProfileModels
+                            .ledTimingStrengthMultiplierNight;
+                        ledBaseStrengthRed.value = lightUtilityProviders
+                            .currLedProfileModels.ledChannelRedBaseStrength;
+                        ledBaseStrengthGreen.value = lightUtilityProviders
+                            .currLedProfileModels.ledChannelGreenBaseStrength;
+                        ledBaseStrengthBlue.value = lightUtilityProviders
+                            .currLedProfileModels.ledChannelBlueBaseStrength;
+                        ledBaseStrengthWhite.value = lightUtilityProviders
+                            .currLedProfileModels.ledChannelWhiteBaseStrength;
+                      }
                     },
                     adaptiveSize: adaptSize,
                     textColor: Colors.white),

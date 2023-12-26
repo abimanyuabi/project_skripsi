@@ -5,6 +5,7 @@ import 'package:flutter_source_code/screen/auth_screen/register_screen.dart';
 import 'package:flutter_source_code/screen/home_screen/home_screen.dart';
 import 'package:flutter_source_code/screen/splashscreen/splashscreen.dart';
 import 'package:flutter_source_code/viewmodel/auth_viewmodel/authentication_viemodel.dart';
+import 'package:flutter_source_code/viewmodel/debug_viewmodel/debug_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
@@ -30,15 +31,16 @@ class MainClass extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ParameterViewModel()),
         ChangeNotifierProvider(create: (_) => LightUtilityViewModel()),
         ChangeNotifierProvider(create: (_) => DosingProfileViewModel()),
-        ChangeNotifierProvider(create: (_) => DeviceModeViewModel())
+        ChangeNotifierProvider(create: (_) => DeviceModeViewModel()),
+        ChangeNotifierProvider(create: (_) => DebugViewModel())
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
         routes: {
-          '/': (context) => SplashScreen(),
-          '/login_screen': (context) => LoginScreen(),
-          '/register_screen': (context) => RegisterScreen(),
-          '/home_screen': (context) => HomeScreen(),
+          '/': (context) => const SplashScreen(),
+          '/login_screen': (context) => const LoginScreen(),
+          '/register_screen': (context) => const RegisterScreen(),
+          '/home_screen': (context) => const HomeScreen(),
         },
         initialRoute: '/',
         debugShowCheckedModeBanner: false,

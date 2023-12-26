@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/gen/assets.gen.dart';
-import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/model/sensor_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/utility/enums.dart';
 import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
-
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
 import 'package:flutter_source_code/widget/chart_widget.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
@@ -12,17 +11,20 @@ import 'package:flutter_source_code/widget/default_text.dart';
 import 'package:flutter_source_code/widget/mode_widget.dart';
 import 'package:flutter_source_code/widget/stat_text.dart';
 
-Widget mainScreen({
-  required AdaptiveSize adaptSize,
-  required TextEditingController alkalinityTextEditingController,
-  required TextEditingController calciumTextEditingController,
-  required TextEditingController magnesiumTextEditingController,
-  required ValueNotifier<bool> feedingMode,
-  required ValueNotifier<bool> viewingMode,
-  required ValueNotifier<int> waveMode,
-  required ParameterViewModel parameterProviders,
-  required DeviceModeViewModel deviceModeProviders,
-}) {
+Widget mainScreen(
+    {required AdaptiveSize adaptSize,
+    required TextEditingController alkalinityTextEditingController,
+    required TextEditingController calciumTextEditingController,
+    required TextEditingController magnesiumTextEditingController,
+    required TextEditingController salinityTextEditingController,
+    required ValueNotifier<bool> feedingMode,
+    required ValueNotifier<bool> viewingMode,
+    required ValueNotifier<int> waveMode,
+    required ParameterViewModel parameterProviders,
+    required DeviceModeViewModel deviceModeProviders,
+    required BuildContext context,
+    required ValueNotifier<DateTime?> pickedParameterTestDate,
+    required GlobalKey<FormState> formKey}) {
   return SizedBox(
     width: adaptSize.deviceSize.width,
     child: Column(
@@ -55,7 +57,7 @@ Widget mainScreen({
                             : Colors.black,
                         buttonColor: feedingModeFlag == true
                             ? Colors.green
-                            : Color.fromARGB(255, 200, 200, 200),
+                            : const Color.fromARGB(255, 200, 200, 200),
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
@@ -88,7 +90,7 @@ Widget mainScreen({
                             },
                             buttonColor: feedingModeFlag == false
                                 ? Colors.red
-                                : Color.fromARGB(255, 200, 200, 200),
+                                : const Color.fromARGB(255, 200, 200, 200),
                             prefButtonHeight:
                                 adaptSize.adaptHeight(desiredSize: 24),
                             prefButtonWidth:
@@ -128,7 +130,7 @@ Widget mainScreen({
                             waveModeFlag == 1 ? Colors.white : Colors.black,
                         buttonColor: waveModeFlag == 1
                             ? Colors.lightBlue
-                            : Color.fromARGB(255, 200, 200, 200),
+                            : const Color.fromARGB(255, 200, 200, 200),
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
@@ -148,7 +150,7 @@ Widget mainScreen({
                             waveModeFlag == 2 ? Colors.white : Colors.black,
                         buttonColor: waveModeFlag == 2
                             ? Colors.lightBlue
-                            : Color.fromARGB(255, 200, 200, 200),
+                            : const Color.fromARGB(255, 200, 200, 200),
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
@@ -168,7 +170,7 @@ Widget mainScreen({
                             waveModeFlag == 3 ? Colors.white : Colors.black,
                         buttonColor: waveModeFlag == 3
                             ? Colors.lightBlue
-                            : Color.fromARGB(255, 200, 200, 200),
+                            : const Color.fromARGB(255, 200, 200, 200),
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
@@ -212,7 +214,7 @@ Widget mainScreen({
                             : Colors.black,
                         buttonColor: viewingModeFlag == true
                             ? Colors.green
-                            : Color.fromARGB(255, 200, 200, 200),
+                            : const Color.fromARGB(255, 200, 200, 200),
                         prefButtonHeight:
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
@@ -245,7 +247,7 @@ Widget mainScreen({
                             },
                             buttonColor: viewingModeFlag == false
                                 ? Colors.red
-                                : Color.fromARGB(255, 200, 200, 200),
+                                : const Color.fromARGB(255, 200, 200, 200),
                             prefButtonHeight:
                                 adaptSize.adaptHeight(desiredSize: 24),
                             prefButtonWidth:
@@ -261,7 +263,7 @@ Widget mainScreen({
         ),
         SizedBox(
           width: adaptSize.deviceSize.width,
-          height: (adaptSize.deviceSize.height / 3) * 2,
+          height: (adaptSize.deviceSize.height / 3) * 5 + 60,
           child: Padding(
             padding: EdgeInsets.only(
                 left: adaptSize.adaptWidth(desiredSize: 20),
@@ -276,8 +278,9 @@ Widget mainScreen({
                     top: adaptSize.adaptHeight(desiredSize: 20),
                   ),
                   child: sensorReadingChartView(
-                      arrayOfParameter: dummySensor(),
-                      chartHeight: 240,
+                      adaptiveSize: adaptSize,
+                      arrayOfSensor: parameterProviders.listOfensorModels,
+                      chartHeight: 620,
                       chartName: "Sensor Reading"),
                 ),
                 Padding(
@@ -285,9 +288,10 @@ Widget mainScreen({
                     top: adaptSize.adaptHeight(desiredSize: 20),
                   ),
                   child: waterChemistryChartView(
-                      arrayOfParameter: dummyListWaterChemistry(),
-                      chartHeight: 240,
-                      chartName: "Water Chemistry"),
+                    adaptiveSize: adaptSize,
+                    arrayOfParameter: parameterProviders.waterChemistryModels,
+                    chartHeight: 820,
+                  ),
                 )
               ],
             ),
@@ -300,52 +304,139 @@ Widget mainScreen({
             child: SizedBox(
               width: adaptSize.adaptWidth(desiredSize: 360),
               height: adaptSize.adaptHeight(desiredSize: 260),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  headingText1(
-                      text: "Water Test Input", adaptiveSize: adaptSize),
-                  statTextBox1(
-                    textEditingController: alkalinityTextEditingController,
-                    parameterText: "Alkalinity",
-                    parameterValue: "999",
-                    parameterScale: "Dkh",
-                    maxValue: 100,
-                    adaptiveSize: adaptSize,
-                  ),
-                  statTextBox1(
-                    textEditingController: calciumTextEditingController,
-                    parameterText: "Calcium",
-                    parameterValue: "999",
-                    parameterScale: "ppm",
-                    maxValue: 1000,
-                    adaptiveSize: adaptSize,
-                  ),
-                  statTextBox1(
-                    textEditingController: magnesiumTextEditingController,
-                    parameterText: "Magnesium",
-                    parameterValue: "999",
-                    parameterScale: "ppm",
-                    maxValue: 1000,
-                    adaptiveSize: adaptSize,
-                  ),
-                  Center(
-                    child: actionButton(
-                      buttonText: "Upload",
-                      textColor: Colors.white,
-                      actionFunc: () async {
-                        await parameterProviders.writeSensorData(
-                            sensorReadings: dummySensorModel());
-                        await parameterProviders.writeWaterChemistryData(
-                            waterChemistry: dummyWaterChemistry());
-                        await deviceModeProviders.writeDeviceMode(
-                            deviceModeModel: dummyDeviceProfile());
-                      },
-                      adaptiveSize: adaptSize,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    headingText1(
+                        text: "Water Test Input", adaptiveSize: adaptSize),
+                    const Spacer(),
+                    statTextBox1(
+                        textEditingController: alkalinityTextEditingController,
+                        parameterText: "Alkalinity",
+                        parameterValue: "999",
+                        parameterScale: "Dkh",
+                        maxValue: 100,
+                        adaptiveSize: adaptSize,
+                        context: context,
+                        datePickerAttachment: true,
+                        pickedDate: pickedParameterTestDate),
+                    const Spacer(),
+                    statTextBox1(
+                        textEditingController: calciumTextEditingController,
+                        parameterText: "Calcium",
+                        parameterValue: "999",
+                        parameterScale: "ppm",
+                        maxValue: 1000,
+                        adaptiveSize: adaptSize,
+                        pickedDate: pickedParameterTestDate,
+                        datePickerAttachment: false,
+                        context: context),
+                    const Spacer(),
+                    statTextBox1(
+                        textEditingController: magnesiumTextEditingController,
+                        parameterText: "Magnesium",
+                        parameterValue: "999",
+                        parameterScale: "ppm",
+                        maxValue: 1000,
+                        adaptiveSize: adaptSize,
+                        pickedDate: pickedParameterTestDate,
+                        datePickerAttachment: false,
+                        context: context),
+                    const Spacer(),
+                    statTextBox1(
+                        textEditingController: salinityTextEditingController,
+                        parameterText: "Salinity",
+                        parameterValue: "1025",
+                        parameterScale: "ppt",
+                        maxValue: 2000,
+                        adaptiveSize: adaptSize,
+                        pickedDate: pickedParameterTestDate,
+                        datePickerAttachment: false,
+                        context: context),
+                    const Spacer(),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          right: adaptSize.adaptWidth(desiredSize: 20)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          headingText2(
+                              text: "Test Date", adaptiveSize: adaptSize),
+                          IconButton(
+                            padding: const EdgeInsets.all(0),
+                            iconSize: adaptSize.adaptWidth(desiredSize: 24),
+                            onPressed: () async {
+                              final selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2050));
+                              pickedParameterTestDate.value = selectedDate;
+                            },
+                            icon: Icon(
+                              Icons.date_range,
+                              size: adaptSize.adaptHeight(desiredSize: 28),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    Center(
+                      child: actionButton(
+                        buttonText: "Upload",
+                        textColor: Colors.white,
+                        actionFunc: () async {
+                          final isFormValid = formKey.currentState!.validate();
+                          if (isFormValid) {
+                            await parameterProviders.recordWaterChemistryLog(
+                              inpWaterChemistryModel: WaterChemistryModel(
+                                alkalinity: double.parse(
+                                    alkalinityTextEditingController.text),
+                                calcium: double.parse(
+                                    calciumTextEditingController.text),
+                                magnesium: double.parse(
+                                    magnesiumTextEditingController.text),
+                                salinity: double.parse(
+                                    salinityTextEditingController.text),
+                                dateTime: pickedParameterTestDate.value ??
+                                    DateTime.now(),
+                              ),
+                            );
+                            if (parameterProviders.dataCommStatus ==
+                                DataCommStatus.success) {
+                              // do something when success
+                              alkalinityTextEditingController.clear();
+                              calciumTextEditingController.clear();
+                              magnesiumTextEditingController.clear();
+                              salinityTextEditingController.clear();
+                              parameterProviders.resetCommStatus();
+                              parameterProviders.getWaterChemistryRecord();
+                            }
+                          } else {
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                    title: const Text("data not valid!"),
+                                  );
+                                });
+                          }
+                        },
+                        adaptiveSize: adaptSize,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

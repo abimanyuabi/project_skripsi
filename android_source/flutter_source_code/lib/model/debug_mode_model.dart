@@ -12,6 +12,7 @@ class DebugModeModel {
   late bool wavePumpLeftFlag;
   late bool wavePumpRightFlag;
   late bool debugModeFlag;
+  late bool sumpFan;
   DebugModeModel(
       {required this.ledChannelRedStrength,
       required this.ledChannelGreenStrength,
@@ -25,7 +26,8 @@ class DebugModeModel {
       required this.returnPumpFlag,
       required this.wavePumpLeftFlag,
       required this.wavePumpRightFlag,
-      required this.debugModeFlag});
+      required this.debugModeFlag,
+      required this.sumpFan});
   void debugModeSetter(bool debugFlag) {
     debugModeFlag = debugFlag;
   }
@@ -49,5 +51,6 @@ DebugModeModel debugModelDummy() {
       returnPumpFlag: true,
       wavePumpLeftFlag: true,
       wavePumpRightFlag: true,
-      debugModeFlag: false);
+      debugModeFlag: false,
+      sumpFan: false);
 }
