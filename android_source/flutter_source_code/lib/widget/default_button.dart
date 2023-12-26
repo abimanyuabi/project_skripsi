@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/widget/default_text.dart';
+
+Widget defaultButton(
+    {required String buttonText,
+    required void Function() actionFunc,
+    required double prefButtonWidth,
+    required double prefButtonHeight,
+    required AdaptiveSize adaptiveSize,
+    Color? textColor,
+    Color? buttonColor,
+    Color? buttonBorderSideColor,
+    double? buttonEdgeRadius}) {
+  return SizedBox(
+    width: prefButtonWidth,
+    height: prefButtonHeight,
+    child: ElevatedButton(
+      onPressed: actionFunc,
+      style: ButtonStyle(
+        padding: MaterialStateProperty.all<EdgeInsets>(
+          EdgeInsets.zero,
+        ),
+        backgroundColor:
+            MaterialStateProperty.all<Color>(buttonColor ?? Colors.blueAccent),
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(buttonEdgeRadius ?? 4),
+            side: BorderSide(
+                color:
+                    buttonBorderSideColor ?? buttonColor ?? Colors.blueAccent),
+          ),
+        ),
+      ),
+      child: defButtonText(
+          text: buttonText, adaptiveSize: adaptiveSize, textColor: textColor),
+    ),
+  );
+}
+
+Widget actionButton(
+    {required String buttonText,
+    required void Function() actionFunc,
+    required AdaptiveSize adaptiveSize,
+    Color? textColor,
+    Color? buttonColor,
+    Color? buttonBorderSideColor,
+    double? buttonBorderWidth,
+    double? buttonEdgeRadius,
+    double? buttonWidth,
+    double? buttonHeight}) {
+  return SizedBox(
+    width: adaptiveSize.adaptWidth(desiredSize: buttonWidth ?? 108),
+    height: adaptiveSize.adaptHeight(desiredSize: buttonHeight ?? 26),
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor ?? Colors.blue,
+          side: buttonBorderSideColor == null
+              ? null
+              : BorderSide(
+                  color: buttonBorderSideColor, width: buttonBorderWidth ?? 2)),
+      onPressed: actionFunc,
+      child: defButtonText(
+        text: buttonText,
+        textColor: textColor,
+        adaptiveSize: adaptiveSize,
+      ),
+    ),
+  );
+}

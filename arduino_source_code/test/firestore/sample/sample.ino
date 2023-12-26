@@ -118,9 +118,9 @@ void loop() {
   }else{
     digitalWrite(netPilotLamp, HIGH);
     if(deviceProfileFetchFlag == true){
-      fetchDeviceProfileData();
+      //fetchDeviceProfileData();
     }else if(deviceProfileRecordFlag == true){
-      recordDeviceProfileData();
+      //recordDeviceProfileData();
     }else if(sensorDataRecordFlag == true){
       recordSensorData();
     }else if(sensorDataFetchFlag == true){
@@ -185,10 +185,13 @@ bool recordIntData(String entityPath, int entityValue){
       //firebase ready, try to saving int data
       if(Firebase.RTDB.setInt(&fbsData, ("Data/"+ entityPath), entityValue)){
         ledBlink();
+        Serial.println("success saving to db, at : " + fbsData.dataPath());
+        Serial.println("(" + fbsData.dataType() + ")");
         //success saving to db
         isRecordDataSuccess = true;
       }else{
         //Failed saving data
+        Serial.println("Failed saving data cuz : " + fbsData.errorReason());
         isRecordDataSuccess = false;
       }
     }else{
