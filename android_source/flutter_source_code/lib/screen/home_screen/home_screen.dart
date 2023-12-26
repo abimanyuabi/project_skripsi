@@ -187,31 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
           debugProviders: debugModeProviders),
     ];
 
-    ledTimingSunrise.value =
-        lightUtilityProviders.currLedProfileModels.ledTimingSunrise;
-    ledTimingPeak.value =
-        lightUtilityProviders.currLedProfileModels.ledTimingPeak;
-    ledTimingSunset.value =
-        lightUtilityProviders.currLedProfileModels.ledTimingSunset;
-    ledTimingNight.value =
-        lightUtilityProviders.currLedProfileModels.ledTimingNight;
-    ledMultiplierSunrise.value = lightUtilityProviders
-        .currLedProfileModels.ledTimingStrengthMultiplierSunrise;
-    ledMultiplierPeak.value = lightUtilityProviders
-        .currLedProfileModels.ledTimingStrengthMultiplierPeak;
-    ledMultiplierSunset.value = lightUtilityProviders
-        .currLedProfileModels.ledTimingStrengthMultiplierSunset;
-    ledMultiplierNight.value = lightUtilityProviders
-        .currLedProfileModels.ledTimingStrengthMultiplierNight;
-    ledBaseStrengthRed.value =
-        lightUtilityProviders.currLedProfileModels.ledChannelRedBaseStrength;
-    ledBaseStrengthGreen.value =
-        lightUtilityProviders.currLedProfileModels.ledChannelGreenBaseStrength;
-    ledBaseStrengthBlue.value =
-        lightUtilityProviders.currLedProfileModels.ledChannelBlueBaseStrength;
-    ledBaseStrengthWhite.value =
-        lightUtilityProviders.currLedProfileModels.ledChannelWhiteBaseStrength;
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Padding(

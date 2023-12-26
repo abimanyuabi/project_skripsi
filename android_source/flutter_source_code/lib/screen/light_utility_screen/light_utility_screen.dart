@@ -24,6 +24,31 @@ Widget lightUtilityScreen({
   required ValueNotifier<int> ledTimingNight,
   required LightUtilityViewModel lightUtilityProviders,
 }) {
+  ledTimingSunrise.value =
+      lightUtilityProviders.currLedProfileModels.ledTimingSunrise;
+  ledTimingPeak.value =
+      lightUtilityProviders.currLedProfileModels.ledTimingPeak;
+  ledTimingSunset.value =
+      lightUtilityProviders.currLedProfileModels.ledTimingSunset;
+  ledTimingNight.value =
+      lightUtilityProviders.currLedProfileModels.ledTimingNight;
+  ledMultiplierSunrise.value = lightUtilityProviders
+      .currLedProfileModels.ledTimingStrengthMultiplierSunrise;
+  ledMultiplierPeak.value = lightUtilityProviders
+      .currLedProfileModels.ledTimingStrengthMultiplierPeak;
+  ledMultiplierSunset.value = lightUtilityProviders
+      .currLedProfileModels.ledTimingStrengthMultiplierSunset;
+  ledMultiplierNight.value = lightUtilityProviders
+      .currLedProfileModels.ledTimingStrengthMultiplierNight;
+  ledBaseStrengthRed.value =
+      lightUtilityProviders.currLedProfileModels.ledChannelRedBaseStrength;
+  ledBaseStrengthGreen.value =
+      lightUtilityProviders.currLedProfileModels.ledChannelGreenBaseStrength;
+  ledBaseStrengthBlue.value =
+      lightUtilityProviders.currLedProfileModels.ledChannelBlueBaseStrength;
+  ledBaseStrengthWhite.value =
+      lightUtilityProviders.currLedProfileModels.ledChannelWhiteBaseStrength;
+
   return SizedBox(
     width: adaptSize.deviceSize.width,
     child: Column(
@@ -318,38 +343,6 @@ Widget lightUtilityScreen({
                               ledChannelWhiteBaseStrength:
                                   ledBaseStrengthWhite.value));
                       await lightUtilityProviders.getLedProfile();
-                      if (lightUtilityProviders.dataCommStatus ==
-                          DataCommStatus.success) {
-                        lightUtilityProviders.resetCommStatus();
-                        ledTimingSunrise.value = lightUtilityProviders
-                            .currLedProfileModels.ledTimingSunrise;
-                        ledTimingPeak.value = lightUtilityProviders
-                            .currLedProfileModels.ledTimingPeak;
-                        ledTimingSunset.value = lightUtilityProviders
-                            .currLedProfileModels.ledTimingSunset;
-                        ledTimingNight.value = lightUtilityProviders
-                            .currLedProfileModels.ledTimingNight;
-                        ledMultiplierSunrise.value = lightUtilityProviders
-                            .currLedProfileModels
-                            .ledTimingStrengthMultiplierSunrise;
-                        ledMultiplierPeak.value = lightUtilityProviders
-                            .currLedProfileModels
-                            .ledTimingStrengthMultiplierPeak;
-                        ledMultiplierSunset.value = lightUtilityProviders
-                            .currLedProfileModels
-                            .ledTimingStrengthMultiplierSunset;
-                        ledMultiplierNight.value = lightUtilityProviders
-                            .currLedProfileModels
-                            .ledTimingStrengthMultiplierNight;
-                        ledBaseStrengthRed.value = lightUtilityProviders
-                            .currLedProfileModels.ledChannelRedBaseStrength;
-                        ledBaseStrengthGreen.value = lightUtilityProviders
-                            .currLedProfileModels.ledChannelGreenBaseStrength;
-                        ledBaseStrengthBlue.value = lightUtilityProviders
-                            .currLedProfileModels.ledChannelBlueBaseStrength;
-                        ledBaseStrengthWhite.value = lightUtilityProviders
-                            .currLedProfileModels.ledChannelWhiteBaseStrength;
-                      }
                     },
                     adaptiveSize: adaptSize,
                     textColor: Colors.white),

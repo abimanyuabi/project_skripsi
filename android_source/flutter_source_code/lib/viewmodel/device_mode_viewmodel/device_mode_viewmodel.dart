@@ -8,7 +8,7 @@ class DeviceModeViewModel with ChangeNotifier {
   DataCommStatus dataCommStatus = DataCommStatus.standby;
   String errMessege = '-';
   final flutterSecureStorageObject = const FlutterSecureStorage();
-  late DeviceModeModel deviceModeModel;
+  DeviceModeModel deviceModeModel = dummyDeviceProfile();
   DeviceModeModel get deviceModeModels => deviceModeModel;
   final firebaseRTDBObject = FirebaseDatabase.instance.ref();
   String parentDataPath = "aquariums_data_prod";
@@ -26,6 +26,30 @@ class DeviceModeViewModel with ChangeNotifier {
             .set({
           "16": deviceModeModel.deviceMode,
           "17": deviceModeModel.waveFormMode
+        });
+        dataCommStatus = DataCommStatus.success;
+        notifyListeners();
+      } catch (e) {
+        dataCommStatus = DataCommStatus.failed;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> getDeviceMode() async {
+    dataCommStatus = DataCommStatus.loading;
+    notifyListeners();
+    String? currUser =
+        await flutterSecureStorageObject.read(key: "curr_user_uid");
+    if (currUser != null) {
+      try {
+        await firebaseRTDBObject
+            .child("$parentDataPath/$currUser/device_mode")
+            .once()
+            .then((event) {
+          deviceModeModel = DeviceModeModel(
+              deviceMode: (event.snapshot.value as Map)["16"],
+              waveFormMode: (event.snapshot.value as Map)["17"]);
         });
         dataCommStatus = DataCommStatus.success;
         notifyListeners();

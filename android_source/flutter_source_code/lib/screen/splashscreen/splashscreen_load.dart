@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
+import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/parameter_monitor_viewmodel/parameter_monitor_viewmodel.dart';
@@ -22,12 +23,15 @@ class _SplashScreenLoadState extends State<SplashScreenLoad> {
         Provider.of<DosingProfileViewModel>(context, listen: false);
     final ledProfileProviders =
         Provider.of<LightUtilityViewModel>(context, listen: false);
+    final deviceModeProviders =
+        Provider.of<DeviceModeViewModel>(context, listen: false);
     if (parameterProviders.isUserExists) {
       Future.delayed(Duration.zero, (() {
         parameterProviders.getWaterChemistryRecord();
         dosingProviders.getDosingLog();
         parameterProviders.getNewSensorDataRTDB();
         ledProfileProviders.getLedProfile();
+        deviceModeProviders.getDeviceMode();
       }));
 
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {

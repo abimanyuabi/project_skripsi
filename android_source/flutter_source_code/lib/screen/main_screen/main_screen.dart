@@ -25,6 +25,17 @@ Widget mainScreen(
     required BuildContext context,
     required ValueNotifier<DateTime?> pickedParameterTestDate,
     required GlobalKey<FormState> formKey}) {
+  if (deviceModeProviders.deviceModeModels.deviceMode == 0) {
+    feedingMode.value = false;
+    viewingMode.value = false;
+  } else if (deviceModeProviders.deviceModeModels.deviceMode == 1) {
+    feedingMode.value = true;
+    viewingMode.value = false;
+  } else if (deviceModeProviders.deviceModeModels.deviceMode == 2) {
+    feedingMode.value = false;
+    viewingMode.value = true;
+  }
+  waveMode.value = deviceModeProviders.deviceModeModels.waveFormMode;
   return SizedBox(
     width: adaptSize.deviceSize.width,
     child: Column(
@@ -62,10 +73,11 @@ Widget mainScreen(
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
                         actionFunc: () async {
-                          feedingMode.value = true;
                           if (viewingMode.value != true) {
+                            feedingMode.value = true;
                             await deviceModeProviders.updateDeviceMode(
                                 deviceMode: 1);
+                            await deviceModeProviders.getDeviceMode();
                           }
                         }),
                   ),
@@ -86,6 +98,7 @@ Widget mainScreen(
                               if (viewingModeFlag == false) {
                                 await deviceModeProviders.updateDeviceMode(
                                     deviceMode: 0);
+                                await deviceModeProviders.getDeviceMode();
                               }
                             },
                             buttonColor: feedingModeFlag == false
@@ -138,6 +151,7 @@ Widget mainScreen(
                           waveMode.value = 1;
                           await deviceModeProviders.updateWaveMode(
                               waveMode: waveMode.value);
+                          await deviceModeProviders.getDeviceMode();
                         },
                       ),
                     ),
@@ -158,6 +172,7 @@ Widget mainScreen(
                           waveMode.value = 2;
                           await deviceModeProviders.updateWaveMode(
                               waveMode: waveMode.value);
+                          await deviceModeProviders.getDeviceMode();
                         },
                       ),
                     ),
@@ -178,6 +193,7 @@ Widget mainScreen(
                           waveMode.value = 3;
                           await deviceModeProviders.updateWaveMode(
                               waveMode: waveMode.value);
+                          await deviceModeProviders.getDeviceMode();
                         },
                       ),
                     ),
@@ -219,10 +235,12 @@ Widget mainScreen(
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
                         actionFunc: () async {
-                          viewingMode.value = true;
                           if (feedingMode.value != true) {
+                            viewingMode.value = true;
+
                             await deviceModeProviders.updateDeviceMode(
                                 deviceMode: 2);
+                            await deviceModeProviders.getDeviceMode();
                           }
                         }),
                   ),
@@ -243,6 +261,7 @@ Widget mainScreen(
                               if (feedingModeFlag == false) {
                                 await deviceModeProviders.updateDeviceMode(
                                     deviceMode: 0);
+                                await deviceModeProviders.getDeviceMode();
                               }
                             },
                             buttonColor: viewingModeFlag == false

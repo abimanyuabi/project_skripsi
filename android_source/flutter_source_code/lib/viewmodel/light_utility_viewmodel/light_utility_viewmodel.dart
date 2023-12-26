@@ -116,28 +116,38 @@ class LightUtilityViewModel with ChangeNotifier {
     String? currUser =
         await flutterSecureStorageObject.read(key: "curr_user_uid");
     if (currUser != null) {
-      await firebaseRTDBObject
-          .child("$parentDataPath/$currUser/led_profile")
-          .once()
-          .then((snapshot) {
-        currLedProfileModel = LedProfileModel(
-            ledTimingSunrise: (snapshot.snapshot.value as List)[1],
-            ledTimingPeak: (snapshot.snapshot.value as List)[2],
-            ledTimingSunset: (snapshot.snapshot.value as List)[3],
-            ledTimingNight: (snapshot.snapshot.value as List)[4],
-            ledTimingStrengthMultiplierSunrise:
-                (snapshot.snapshot.value as List)[5],
-            ledTimingStrengthMultiplierPeak:
-                (snapshot.snapshot.value as List)[6],
-            ledTimingStrengthMultiplierSunset:
-                (snapshot.snapshot.value as List)[7],
-            ledTimingStrengthMultiplierNight:
-                (snapshot.snapshot.value as List)[8],
-            ledChannelRedBaseStrength: (snapshot.snapshot.value as List)[9],
-            ledChannelGreenBaseStrength: (snapshot.snapshot.value as List)[10],
-            ledChannelBlueBaseStrength: (snapshot.snapshot.value as List)[11],
-            ledChannelWhiteBaseStrength: (snapshot.snapshot.value as List)[12]);
-      });
+      try {
+        await firebaseRTDBObject
+            .child("$parentDataPath/$currUser/led_profile")
+            .once()
+            .then((snapshot) {
+          currLedProfileModel = LedProfileModel(
+              ledTimingSunrise: (snapshot.snapshot.value as List)[1],
+              ledTimingPeak: (snapshot.snapshot.value as List)[2],
+              ledTimingSunset: (snapshot.snapshot.value as List)[3],
+              ledTimingNight: (snapshot.snapshot.value as List)[4],
+              ledTimingStrengthMultiplierSunrise:
+                  (snapshot.snapshot.value as List)[5],
+              ledTimingStrengthMultiplierPeak:
+                  (snapshot.snapshot.value as List)[6],
+              ledTimingStrengthMultiplierSunset:
+                  (snapshot.snapshot.value as List)[7],
+              ledTimingStrengthMultiplierNight:
+                  (snapshot.snapshot.value as List)[8],
+              ledChannelRedBaseStrength: (snapshot.snapshot.value as List)[9],
+              ledChannelGreenBaseStrength:
+                  (snapshot.snapshot.value as List)[10],
+              ledChannelBlueBaseStrength: (snapshot.snapshot.value as List)[11],
+              ledChannelWhiteBaseStrength:
+                  (snapshot.snapshot.value as List)[12]);
+          dataCommStatus = DataCommStatus.success;
+          notifyListeners();
+        });
+      } catch (e) {
+        errMessege = e.toString();
+        dataCommStatus = DataCommStatus.failed;
+        notifyListeners();
+      }
     }
   }
 }
