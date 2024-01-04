@@ -28,36 +28,15 @@ bool wifiStatus = false;
 bool firebaseStatus = false;
 bool isNewData = false;
 int deviceState = 1; //1 is default mode // 2 is viewing mode // 3 feeding mode
-String testStr = "l";
-bool isCrashed = false;
-String timeCrashed = "-";
 
 //debug parameters data
 int debugData [13] ={255,255,255,255,255,1,1,1,1,1,1,0,0};
 
 //program time tracker declaration
 int minuteCounter = 0;
-int globalSecondTemp1s = 99;
-int globalMinuteTemp1m = 0;
+int globalSecondTemp1s = -1;
+int globalMinuteTemp1m = -1;
 unsigned long currMillis = 0;
-
-//sensor parameters declaration
-//top up parameters declaration
-#define topUpPumpPin A3
-bool waterLevelStatus = false;
-int topUpCount = 0;
-int waterLoss = 1; //deciliter
-bool isTopUpDone = false;
-
-//temp parameter declaration
-#define sumpFanPin P1
-float temperatureReading = 0;
-
-
-//ph sensor parameter declaration
-float phReading = 0.0;
-const int phSamplingCount = 4;
-const float adcResolution = 1024.0;
 
 //led parameters declaration
 #define ledFanPin P0

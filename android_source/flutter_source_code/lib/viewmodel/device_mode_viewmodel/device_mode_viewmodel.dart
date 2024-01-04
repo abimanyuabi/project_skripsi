@@ -70,7 +70,7 @@ class DeviceModeViewModel with ChangeNotifier {
         await firebaseRTDBObject
             .child("$parentDataPath/$currUser/device_mode")
             .update({
-          "16": deviceMode,
+          "17": deviceMode,
         });
         dataCommStatus = DataCommStatus.success;
         notifyListeners();
@@ -91,7 +91,7 @@ class DeviceModeViewModel with ChangeNotifier {
       try {
         await firebaseRTDBObject
             .child("$parentDataPath/$currUser/device_mode")
-            .update({"17": waveMode});
+            .update({"18": waveMode});
         dataCommStatus = DataCommStatus.success;
         notifyListeners();
       } catch (e) {

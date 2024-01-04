@@ -4,14 +4,31 @@
 #include "addons/TokenHelper.h"
 #include <string>
 
+// declaration of communication flag
+bool isHalted = false;
+char transCode = '-';
+
+// declaration of net endpoint timings
+const unsigned long timingTriggers = 1000;
+unsigned long timingTimeStamp = 0;
+unsigned long timingCurrMillis = 0;
+
 // declaration of wifi connection parameters
-String wifiSSID = "Kiran2";
-String wifiPassword = "Spectrum";
+const String wifiSSID = "Kiran2";
+const String wifiPassword = "Spectrum";
 bool wifiStatus = false;
 
 //declaration of firebase credential and parameters
-String firebaseDatabaseEndpoint = "https://controllercoral-default-rtdb.asia-southeast1.firebasedatabase.app/";
-String apiKey = "AIzaSyCklfDKO6I3_ZuAzdwgBKZd7lLetzo9tYk";
+const String firebaseDatabaseEndpoint = "https://controllercoral-default-rtdb.asia-southeast1.firebasedatabase.app/";
+const String apiKey = "AIzaSyCklfDKO6I3_ZuAzdwgBKZd7lLetzo9tYk";
+const String userId = "asdowZLkuRgia6K2FF0tyHEjuxv1";
+const String baseDataPath = "aquariums_data_prod";
+const String deviceProfileDataFlagPath = "/is_new_data/device_profile";
+const String deviceDebugDataFlagPath = "/is_new_data/debug";
+const String sensorDataFlagPath = "/is_new_data/sensor_data";
+const String sensorDataPath= "/water_parameters/sensor_readings"
+int errorCount = 0;
+String errorMsg = "-";
 FirebaseData fbsData;
 FirebaseAuth fbsAuth;
 FirebaseConfig config;
@@ -66,24 +83,35 @@ void setup() {
 }
 
 void loop() {
-  if(wifiStatus == false){
-    networkReconnect();
-  }else if(wifiStatus == true && signupStatus == false){
-    firebaseReconnect();
+
+  // executed once a second has elapsed
+  timingCurrMillis = millis();
+  if(timingCurrMillis - timingTimeStamp >=timingTriggers){
+    timingTimeStamp = timingCurrMillis;
+    if(pingFirebase() == true ){
+        if(isHalted == false){
+          fetchNewDeviceData();
+        }
+      }
+    if(pingFirebaseDebug()==true ){
+      if(isHalted == false){
+        fetchDebugDataFromFirebase();
+      }
+    }
+    if(checkNetwork() == false){
+      pingArduino('g' );
+    }if(signupStatus == false && wifiStatus == true ){
+      pingArduino('h');
+    }
   }
-  // put your main code here, to run repeatedly:
+  
+  // executed every loop
   if(Serial.available()){
-    char transCode = '-';
+    transCode = '-';
     transCode = Serial.read();
     if(transCode == 'a'){
-      if(signupStatus == true ){
-        pingArduino('i');
-      }else if(signupStatus == false && wifiStatus == true ){
-        pingArduino('h');
-      }else if(wifiStatus == false ){
-        pingArduino('g');
-      }
-    }else if(transCode == 'b' ){
+      //get the wifi auth data from arduino
+    }else if(transCode == 'm' ){
       if(signupStatus == true){
         getSensorArrayFromArduino();
       }if(checkNetwork() == false){
@@ -92,19 +120,17 @@ void loop() {
         pingArduino('h');
       }
       
-    }else if(transCode == 'c'){
-      if(pingFirebase() == true ){
-        fetchNewDeviceData();
-      }
-      if(pingFirebaseDebug()==true ){
-        fetchDebugDataFromFirebase();
-      }
-      
     }
     else{
       transCode = '-';
     }
   }
+  if(wifiStatus == false){
+    networkReconnect();
+  }else if(wifiStatus == true && signupStatus == false){
+    firebaseReconnect();
+  }
+  
 }
 
 void networkReconnect(){
@@ -138,7 +164,7 @@ void firebaseReconnect(){
     if(Firebase.ready()){
       //signup ok
       signupStatus = true;
-      Serial.println("ready");
+      pingArduino('i');
     }else{
       firebaseErrorMsg = config.signer.signupError.message.c_str();
     }
@@ -147,29 +173,50 @@ void firebaseReconnect(){
 void fetchNewDeviceData(){
   int arrBuffer [18];
   bool isDataValid = true;
-  for(int x = 0; x<18;x++){
-    int tempVals = getIntData("devprof/"+String(x));
-    if(tempVals>0){
-      arrBuffer[x] = tempVals;
-    }else{
+  int retrievedValue = -1;
+  for(int x = 1; x<=18;x++){
+    if(x>0 && x<=12){
+      retrievedValue= getIntData(baseDataPath+"/"+userId+"/led_profile/"+String(x));
+      if(retrievedValue>-1){
+        arrBuffer[x-1] = retrievedValue;
+      }else{
       //received data is not valid
       isDataValid = false;
+      }
+    }else if(x>12 && x<=16){
+      retrievedValue= getIntData(baseDataPath+"/"+userId+"/dosing_profile/"+String(x));
+      if(retrievedValue>-1){
+        arrBuffer[x-1] = retrievedValue;
+      }else{
+      //received data is not valid
+      isDataValid = false;
+      }
+    }else if(x>16 && x<=18){
+      retrievedValue= getIntData(baseDataPath+"/"+userId+"/device_mode/"+String(x));
+      if(retrievedValue>-1){
+        arrBuffer[x-1] = retrievedValue;
+      }else{
+      //received data is not valid
+      isDataValid = false;
+      }
     }
+
   }
   if(isDataValid == true){
-    recordBoolData("devprof/isNewData", false);
+    recordBoolData(baseDataPath+"/"+userId+deviceProfileDataFlagPath, false);
     pingArduino('j');
     for(int y = 0; y<18; y++){
       Serial.print(arrBuffer[y]); // Send the array element
       Serial.print(","); // Send a comma as a separator
     }
+    pingArduino('l');
     Serial.println();
   }
 }
 bool recordBoolData(String entityPath, bool entityData){
   bool isSuccess = false;
   if(Firebase.ready()){
-    if(Firebase.RTDB.setBool(&fbsData, ("aquariums_data/"+ entityPath), entityData)){
+    if(Firebase.RTDB.setBool(&fbsData, entityPath, entityData)){
       ledBlink();
       isSuccess = true;
     }
@@ -179,7 +226,7 @@ bool recordBoolData(String entityPath, bool entityData){
 int getIntData(String entityPath){
   int tempVal = -1;
   if(Firebase.ready()){
-    if(Firebase.RTDB.getInt(&fbsData, ("aquariums_data/"+entityPath))){
+    if(Firebase.RTDB.getInt(&fbsData, (entityPath))){
         ledBlink();
         tempVal = fbsData.to<int>();
     }
@@ -189,12 +236,16 @@ int getIntData(String entityPath){
 bool getSensorArrayFromArduino(){
   // Read the incoming data and populate the array
   bool recordStatus = true;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 3; i++) {
       int data = Serial.parseInt(); // Read and convert to integer
-      if(recordIntData("sensor/"+String(i), data) == false){
+      if(
+        recordIntData(baseDataPath+"/"+userId+sensorDataPath+String(i), data) == false){
         recordStatus = false;
-      }
+      }      
       Serial.read(); // Read the comma separator
+    }
+    if(recordStatus == true){
+      recordBoolData(baseDataPath+"/"+userId+sensorDataFlagPath, true);
     }
   return recordStatus;
 }
@@ -203,7 +254,7 @@ bool recordIntData(String entityPath, int entityValue){
   if (signupStatus){
     if(Firebase.ready()){
       //firebase ready, try to saving int data
-      if(Firebase.RTDB.setInt(&fbsData, ("aquariums_data/"+ entityPath), entityValue)){
+      if(Firebase.RTDB.setInt(&fbsData, entityPath, entityValue)){
         ledBlink();
         //success saving to db
         isRecordDataSuccess = true;
@@ -230,9 +281,16 @@ void pingArduino(char transCode){
 bool pingFirebase(){
   bool fireStat = false;
   if(Firebase.ready()){
-    if(Firebase.RTDB.getBool(&fbsData, "aquariums_data/devprof/isNewData")){
+    if(Firebase.RTDB.getBool(&fbsData, baseDataPath+"/"+userId+deviceProfileDataFlagPath)){
       ledBlink();
       fireStat = fbsData.to<bool>();
+      
+    }else{
+      errorCount++;
+      if(errorCount == 3){
+        errorMsg = fbsData.errorReason();
+        errorCount = 0;
+      }
     }
   }
   else{
@@ -244,7 +302,7 @@ bool pingFirebase(){
 bool pingFirebaseDebug(){
   bool fireStat = false;
   if(Firebase.ready()){
-    if(Firebase.RTDB.getBool(&fbsData, "debug/isNewData")){
+    if(Firebase.RTDB.getBool(&fbsData, baseDataPath+"/"+userId+deviceDebugDataFlagPath)){
       ledBlink();
       fireStat = fbsData.to<bool>();
     }
@@ -279,7 +337,7 @@ void fetchDebugDataFromFirebase(){
     }
   }
   if(Firebase.ready()){
-    if(Firebase.RTDB.setBool(&fbsData, ("debug/isNewData"), false)){
+    if(Firebase.RTDB.setBool(&fbsData, (baseDataPath+"/"+userId+deviceDebugDataFlagPath), false)){
       ledBlink();
     }
   }
@@ -288,6 +346,7 @@ void fetchDebugDataFromFirebase(){
     Serial.print(arrBuffer[y]); // Send the array element
     Serial.print(","); // Send a comma as a separator
   }
+  pingArduino('l');
   Serial.println();
 }
 

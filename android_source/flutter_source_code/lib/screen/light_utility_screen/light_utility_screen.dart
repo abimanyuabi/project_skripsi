@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_source_code/model/device_profile_model.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
-import 'package:flutter_source_code/utility/enums.dart';
 import 'package:flutter_source_code/viewmodel/light_utility_viewmodel/light_utility_viewmodel.dart';
 import 'package:flutter_source_code/widget/default_button.dart';
 import 'package:flutter_source_code/widget/default_slider.dart';
