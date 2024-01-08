@@ -11,6 +11,8 @@ char transCode = '-';
 const unsigned long timingTrigger = 1000;
 unsigned long timingTimeStamp = 0;
 unsigned long timingCurrentMillis = 0;
+const unsigned long sensorTrigger = 200;
+unsigned long sensorTimeStamp = 0;
 
 //sensor parameters declaration
 //top up parameters declaration
@@ -18,7 +20,7 @@ unsigned long timingCurrentMillis = 0;
 #define topUpPumpPin 4
 const int topUpPumpSpeed = 1; // Litre/s
 int waterLevelStatus = 0;
-int waterTopUpConsumption = 0;
+int waterTopUpConsumption = 1;
 unsigned long topUpTimingCounter = 0;
 unsigned long topUpTimingTimeStamp = 0;
 bool isTopUpTimingInitialized = false;
@@ -27,13 +29,13 @@ bool isTopUpTimingInitialized = false;
 //temp parameter declaration
 #define temperatureSensorPin 2
 #define sumpFan 5
-float temperatureReading = 0;
+float temperatureReading = 1;
 OneWire tempDataLine(temperatureSensorPin);
 DallasTemperature temperatureSensor(&tempDataLine);
 
 //ph sensor parameter declaration
 #define phSensorPin A0
-float phReading = 0.0;
+float phReading = 1.0;
 const int phSamplingCount = 10;
 const float adcResolution = 1024.0;
 void setup() {
@@ -41,31 +43,60 @@ void setup() {
   Serial.begin(9600);
   pinMode(waterLevelSensorPin,INPUT);
   pinMode(topUpPumpPin, OUTPUT);
+  pinMode(sumpFan, OUTPUT);
   digitalWrite(topUpPumpPin, HIGH);
+  digitalWrite(sumpFan, HIGH);
 
 }
 
 void loop() {
+  //timings
   timingCurrentMillis = millis();
   if(timingCurrentMillis - timingTimeStamp >= timingTrigger){
+    timingTimeStamp = timingCurrentMillis;
+    Serial.println(temperatureReading);
+    Serial.println(phReading);
+    Serial.println(waterLevelStatus);
     //send sensor data
     if(isHalted == false){
       sendSensorDataToEsp();
     }
   }
-  // ph read
-  int phAdcRead=0;
-  for (int i = 0; i < phSamplingCount; i++){
-    phAdcRead += analogRead(phSensorPin)-50;
+  if(timingCurrentMillis - sensorTimeStamp >= sensorTrigger){
+    sensorTimeStamp = timingCurrentMillis;
+    // ph read
+    int phAdcRead=0;
+    for (int i = 0; i < phSamplingCount; i++){
+      phAdcRead += analogRead(phSensorPin);
+    }
+    float avgPhVoltage = (phAdcRead/(phSamplingCount*1.0)) * (5 / 1024.0);
+    phReading = abs(7 + ((2.5-avgPhVoltage) / 0.18)); 
+    //temp read
+    temperatureSensor.requestTemperatures();
+    temperatureReading = temperatureSensor.getTempCByIndex(0);
+    //check waterLevel
+    waterLevelStatus= digitalRead(waterLevelSensorPin);
   }
-  float avgPhVoltage = (phAdcRead/(phSamplingCount*1.0)) * (5 / 1024.0);
-  phReading = abs(7 + ((2.5-avgPhVoltage) / 0.18)); 
-  //temp read
-  temperatureSensor.requestTemperatures();
-  temperatureReading = temperatureSensor.getTempCByIndex(0);
-  //check waterLevel
-  waterLevelStatus= digitalRead(waterLevelSensorPin);
-
+  //check serial comm
+  if(Serial.available()){
+    transCode = '-';
+    transCode = Serial.read();
+    if(transCode == 'a' || transCode == 'g' || transCode == 'h' || transCode =='j' || transCode =='k'){
+      //apply halt comm state
+      isHalted = true;
+    }else if (transCode =='b' || transCode == 'i' || transCode == 'l'){
+      //dispel any halt state
+      isHalted = false;
+    }else{
+      transCode = '-';
+    }
+  }
+  if(temperatureReading>27){
+    digitalWrite(sumpFan,LOW);
+  }else if(temperatureReading <=27){
+    digitalWrite(sumpFan, HIGH);
+  }
+  
   //call evaluation function
   evaluateTopUpPumpState();
 }
@@ -90,13 +121,16 @@ void evaluateTopUpPumpState(){
 }
 
 void sendSensorDataToEsp(){
-  int arrBuffer[3] = {(phReading*100), (temperatureReading*100), waterTopUpConsumption}
-  pingArduino('j');
+  int arrBuffer[3] = {(phReading*100), (temperatureReading*100), waterTopUpConsumption};
+  pingDevice('m');
   for(int y = 0; y<3; y++){
     Serial.print(arrBuffer[y]); // Send the array element
     Serial.print(","); // Send a comma as a separator
   }
-  pingArduino('l');
   Serial.println();
+  pingDevice('n');
+}
+void pingDevice(char transCodes){
+  Serial.println(transCodes);
 }
 

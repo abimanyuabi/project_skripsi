@@ -1,0 +1,7 @@
+{
+    "board": "arduino:avr:nano",
+    "programmer": "arduinoisp",
+    "sketch": "arduino_source_code\\master_arduino_nano\\master_main\\master_main.ino",
+    "configuration": "cpu=atmega328",
+    "port": "COM11"
+}

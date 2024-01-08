@@ -26,7 +26,7 @@ const String baseDataPath = "aquariums_data_prod";
 const String deviceProfileDataFlagPath = "/is_new_data/device_profile";
 const String deviceDebugDataFlagPath = "/is_new_data/debug";
 const String sensorDataFlagPath = "/is_new_data/sensor_data";
-const String sensorDataPath= "/water_parameters/sensor_readings"
+const String sensorDataPath= "/water_parameters/sensor_readings";
 int errorCount = 0;
 String errorMsg = "-";
 FirebaseData fbsData;
@@ -36,9 +36,7 @@ bool signupStatus = false;
 #define USER_EMAIL "timorisu5@gmail.com"
 #define USER_PASSWORD "Password123"
 String firebaseErrorMsg = "";
-
 #define netPilotLamp D0
-bool calledOnce = true;
 
 void setup() {
   // put your setup code here, to run once:
@@ -61,8 +59,7 @@ void setup() {
   //check the wifi and try to connect to firebase
   if(WiFi.status()!=WL_CONNECTED){
     //fail to connect to network, proceed on offline mode and retry on program cycle
-    //do nothing
-    Serial.print("fail to wifi");
+    wifiStatus = false;
   }else{
     //Success connected to wifi
     wifiStatus = true;
@@ -83,7 +80,6 @@ void setup() {
 }
 
 void loop() {
-
   // executed once a second has elapsed
   timingCurrMillis = millis();
   if(timingCurrMillis - timingTimeStamp >=timingTriggers){
@@ -102,6 +98,8 @@ void loop() {
       pingArduino('g' );
     }if(signupStatus == false && wifiStatus == true ){
       pingArduino('h');
+    }if(signupStatus == true){
+      pingArduino('i');
     }
   }
   
@@ -115,7 +113,7 @@ void loop() {
       if(signupStatus == true){
         getSensorArrayFromArduino();
       }if(checkNetwork() == false){
-        pingArduino('g' );
+        pingArduino('g');
       }if(signupStatus == false && wifiStatus == true ){
         pingArduino('h');
       }
@@ -173,11 +171,11 @@ void firebaseReconnect(){
 void fetchNewDeviceData(){
   int arrBuffer [18];
   bool isDataValid = true;
-  int retrievedValue = -1;
   for(int x = 1; x<=18;x++){
+    int retrievedValue = -1;
     if(x>0 && x<=12){
       retrievedValue= getIntData(baseDataPath+"/"+userId+"/led_profile/"+String(x));
-      if(retrievedValue>-1){
+      if(retrievedValue > -1){
         arrBuffer[x-1] = retrievedValue;
       }else{
       //received data is not valid
@@ -202,6 +200,7 @@ void fetchNewDeviceData(){
     }
 
   }
+  
   if(isDataValid == true){
     recordBoolData(baseDataPath+"/"+userId+deviceProfileDataFlagPath, false);
     pingArduino('j');
@@ -209,8 +208,8 @@ void fetchNewDeviceData(){
       Serial.print(arrBuffer[y]); // Send the array element
       Serial.print(","); // Send a comma as a separator
     }
-    pingArduino('l');
     Serial.println();
+    pingArduino('l');
   }
 }
 bool recordBoolData(String entityPath, bool entityData){
@@ -237,16 +236,16 @@ bool getSensorArrayFromArduino(){
   // Read the incoming data and populate the array
   bool recordStatus = true;
   for (int i = 0; i < 3; i++) {
-      int data = Serial.parseInt(); // Read and convert to integer
-      if(
-        recordIntData(baseDataPath+"/"+userId+sensorDataPath+String(i), data) == false){
-        recordStatus = false;
-      }      
-      Serial.read(); // Read the comma separator
-    }
-    if(recordStatus == true){
-      recordBoolData(baseDataPath+"/"+userId+sensorDataFlagPath, true);
-    }
+    int data = Serial.parseInt(); // Read and convert to integer
+    if(
+      recordIntData(baseDataPath+"/"+userId+sensorDataPath+"/"+String(i+1), data) == false){
+      recordStatus = false;
+    }    
+    Serial.read(); // Read the comma separator
+  }
+  if(recordStatus == true){
+    recordBoolData(baseDataPath+"/"+userId+sensorDataFlagPath, true);
+  }
   return recordStatus;
 }
 bool recordIntData(String entityPath, int entityValue){
@@ -279,12 +278,11 @@ void pingArduino(char transCode){
   Serial.println(transCode);
 }
 bool pingFirebase(){
+  ledBlink();
   bool fireStat = false;
   if(Firebase.ready()){
     if(Firebase.RTDB.getBool(&fbsData, baseDataPath+"/"+userId+deviceProfileDataFlagPath)){
-      ledBlink();
       fireStat = fbsData.to<bool>();
-      
     }else{
       errorCount++;
       if(errorCount == 3){
@@ -292,9 +290,6 @@ bool pingFirebase(){
         errorCount = 0;
       }
     }
-  }
-  else{
-    fireStat =  false;
   }
   return fireStat;
 }
