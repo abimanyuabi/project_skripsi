@@ -56,17 +56,16 @@ Widget lightUtilityScreen({
       children: [
         SizedBox(
           width: adaptSize.deviceSize.width,
-          height: adaptSize.deviceSize.height / 3,
           child: Center(
             child: SizedBox(
               width: adaptSize.adaptWidth(desiredSize: 380),
-              height: adaptSize.adaptHeight(desiredSize: 300),
+              height: adaptSize.adaptHeight(desiredSize: 360),
               child: Card(
                 elevation: 4,
                 child: Padding(
                   padding: EdgeInsets.only(
                       left: adaptSize.adaptWidth(desiredSize: 46),
-                      top: adaptSize.adaptHeight(desiredSize: 12)),
+                      top: adaptSize.adaptHeight(desiredSize: 44)),
                   child: Stack(
                     children: [
                       Positioned(
@@ -342,6 +341,8 @@ Widget lightUtilityScreen({
                               ledChannelWhiteBaseStrength:
                                   ledBaseStrengthWhite.value));
                       await lightUtilityProviders.getLedProfile();
+                      await lightUtilityProviders
+                          .updateIsNewDataDeviceProfile();
                     },
                     adaptiveSize: adaptSize,
                     textColor: Colors.white),

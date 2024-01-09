@@ -64,8 +64,8 @@ class DosingProfileViewModel with ChangeNotifier {
         await flutterSecureStorageObject.read(key: "curr_user_uid");
     try {
       await firebaseRTDBObject
-          .child("$parentDataPath/$currUser/is_new_data")
-          .set({"device_profile": true});
+          .child("$parentDataPath/$currUser/is_new_data/")
+          .update({"device_profile": true});
       dataCommStatus = DataCommStatus.success;
       notifyListeners();
     } catch (e) {

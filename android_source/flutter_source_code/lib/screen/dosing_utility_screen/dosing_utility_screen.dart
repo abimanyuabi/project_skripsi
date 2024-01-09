@@ -23,7 +23,7 @@ Widget dosingUtilityScreen({
         Center(
           child: SizedBox(
             width: adaptiveSize.adaptWidth(desiredSize: 360),
-            height: adaptiveSize.currHeight() / 3 * 2 + 100,
+            height: adaptiveSize.currHeight() / 3 * 2.6,
             child: Card(
               elevation: 4,
               child: Padding(
@@ -37,7 +37,7 @@ Widget dosingUtilityScreen({
                         dosingProfileUtilityProviders.listOfDosingHistorys,
                     adaptiveSize: adaptiveSize,
                     chartWidth: 260,
-                    chartHeight: 400),
+                    chartHeight: 420),
               ),
             ),
           ),
@@ -71,7 +71,7 @@ Widget dosingUtilityScreen({
                     ),
                     child: defaultSlider(
                         sliderName: "Calcium",
-                        maxValue: 1000,
+                        maxValue: 100,
                         sliderValue: calDose,
                         adaptiveSize: adaptiveSize,
                         suffixText: "ppm"),
@@ -82,7 +82,7 @@ Widget dosingUtilityScreen({
                     ),
                     child: defaultSlider(
                         sliderName: "Magnesium",
-                        maxValue: 1000,
+                        maxValue: 100,
                         sliderValue: magDose,
                         adaptiveSize: adaptiveSize,
                         suffixText: "ppm"),
@@ -99,7 +99,7 @@ Widget dosingUtilityScreen({
           child: Center(
             child: SizedBox(
               width: adaptiveSize.adaptWidth(desiredSize: 320),
-              height: adaptiveSize.currHeight() / 3,
+              height: adaptiveSize.currHeight() / 3 + 60,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -132,27 +132,25 @@ Widget dosingUtilityScreen({
             ),
           ),
         ),
-        Center(
-          child: Padding(
-            padding: EdgeInsets.only(
-                bottom: adaptiveSize.adaptHeight(desiredSize: 20)),
-            child: actionButton(
-                buttonWidth: 128,
-                buttonHeight: 36,
-                buttonText: "Save Settings",
-                actionFunc: () async {
-                  await dosingProfileUtilityProviders.updateDosingProfile(
-                      inpDosingProfileModel: DosingProfileModel(
-                          doseDivider: doseDivider.value,
-                          alkalinityDosage: alkDose.value,
-                          calciumDosage: calDose.value,
-                          magnesiumDosage: magDose.value));
-                  await dosingProfileUtilityProviders
-                      .updateIsNewDataDeviceProfile();
-                },
-                adaptiveSize: adaptiveSize,
-                textColor: Colors.white),
-          ),
+        Padding(
+          padding: EdgeInsets.only(
+              bottom: adaptiveSize.adaptHeight(desiredSize: 40)),
+          child: actionButton(
+              buttonWidth: 128,
+              buttonHeight: 36,
+              buttonText: "Save Settings",
+              actionFunc: () async {
+                await dosingProfileUtilityProviders.updateDosingProfile(
+                    inpDosingProfileModel: DosingProfileModel(
+                        doseDivider: doseDivider.value,
+                        alkalinityDosage: alkDose.value,
+                        calciumDosage: calDose.value,
+                        magnesiumDosage: magDose.value));
+                await dosingProfileUtilityProviders
+                    .updateIsNewDataDeviceProfile();
+              },
+              adaptiveSize: adaptiveSize,
+              textColor: Colors.white),
         )
       ],
     ),

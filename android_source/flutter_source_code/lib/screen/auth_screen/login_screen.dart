@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
           physics: const BouncingScrollPhysics(),
           child: SizedBox(
             width: adaptSize.adaptWidth(desiredSize: 320),
-            height: adaptSize.adaptHeight(desiredSize: 320),
+            height: adaptSize.adaptHeight(desiredSize: 340),
             child: Card(
               elevation: 4,
               child: Form(
@@ -130,107 +130,111 @@ class _LoginScreenState extends State<LoginScreen> {
                             )),
                       ),
                     ),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(
-                              left: adaptSize.adaptWidth(desiredSize: 40)),
-                          child: SizedBox(
-                            width: adaptSize.adaptWidth(desiredSize: 100),
-                            height: adaptSize.adaptHeight(desiredSize: 28),
-                            child: defaultButton(
-                                textColor: Colors.white,
-                                buttonColor: Colors.blueAccent,
-                                buttonText: "login",
-                                actionFunc: () async {
-                                  final isValid =
-                                      _formKey.currentState!.validate();
-                                  if (isValid) {
-                                    await authProvider.authLogin(
-                                        email: _emailController.text,
-                                        password: _passwordController.text);
-                                  } else {
-                                    showDialog(
-                                      context: context,
-                                      builder: ((context) {
-                                        return AlertDialog(
-                                          title: const Center(
-                                              child: Text('login error')),
-                                          content: const Text(
-                                            "invalid form",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.w400),
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: (() {
-                                                authProvider
-                                                    .resetConnectionMessege();
-                                                Navigator.pop(context, 'OK');
-                                              }),
-                                              child: const Text('OK'),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          bottom: adaptSize.adaptHeight(desiredSize: 20)),
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: adaptSize.adaptWidth(desiredSize: 40)),
+                            child: SizedBox(
+                              width: adaptSize.adaptWidth(desiredSize: 100),
+                              height: adaptSize.adaptHeight(desiredSize: 28),
+                              child: defaultButton(
+                                  textColor: Colors.white,
+                                  buttonColor: Colors.blueAccent,
+                                  buttonText: "login",
+                                  actionFunc: () async {
+                                    final isValid =
+                                        _formKey.currentState!.validate();
+                                    if (isValid) {
+                                      await authProvider.authLogin(
+                                          email: _emailController.text,
+                                          password: _passwordController.text);
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: ((context) {
+                                          return AlertDialog(
+                                            title: const Center(
+                                                child: Text('login error')),
+                                            content: const Text(
+                                              "invalid form",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w400),
                                             ),
-                                          ],
-                                        );
-                                      }),
-                                    );
-                                  }
-                                  if (authProvider.authStatus ==
-                                      AuthStatus.failed) {
-                                    showDialog(
-                                      context: context,
-                                      builder: ((context) {
-                                        return AlertDialog(
-                                          title: const Center(
-                                              child: Text('login error')),
-                                          content: Text(
-                                            authProvider.failReason,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w400),
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, 'OK'),
-                                              child: const Text('OK'),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: (() {
+                                                  authProvider
+                                                      .resetConnectionMessege();
+                                                  Navigator.pop(context, 'OK');
+                                                }),
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        }),
+                                      );
+                                    }
+                                    if (authProvider.authStatus ==
+                                        AuthStatus.failed) {
+                                      showDialog(
+                                        context: context,
+                                        builder: ((context) {
+                                          return AlertDialog(
+                                            title: const Center(
+                                                child: Text('login error')),
+                                            content: Text(
+                                              authProvider.failReason,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w400),
                                             ),
-                                          ],
-                                        );
-                                      }),
-                                    );
-                                  }
-                                },
-                                prefButtonWidth:
-                                    adaptSize.adaptWidth(desiredSize: 120),
-                                prefButtonHeight:
-                                    adaptSize.adaptHeight(desiredSize: 28),
-                                adaptiveSize: adaptSize),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(
+                                                    context, 'OK'),
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        }),
+                                      );
+                                    }
+                                  },
+                                  prefButtonWidth:
+                                      adaptSize.adaptWidth(desiredSize: 120),
+                                  prefButtonHeight:
+                                      adaptSize.adaptHeight(desiredSize: 28),
+                                  adaptiveSize: adaptSize),
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            right: adaptSize.adaptWidth(desiredSize: 40),
-                          ),
-                          child: SizedBox(
-                            width: adaptSize.adaptWidth(desiredSize: 100),
-                            height: adaptSize.adaptHeight(desiredSize: 28),
-                            child: defaultButton(
-                                textColor: Colors.grey,
-                                buttonColor: Colors.white,
-                                buttonBorderSideColor: Colors.grey,
-                                buttonText: "exit",
-                                actionFunc: () {
-                                  exit(0);
-                                },
-                                prefButtonWidth:
-                                    adaptSize.adaptWidth(desiredSize: 120),
-                                prefButtonHeight:
-                                    adaptSize.adaptHeight(desiredSize: 28),
-                                adaptiveSize: adaptSize),
-                          ),
-                        )
-                      ],
+                          const Spacer(),
+                          Padding(
+                            padding: EdgeInsets.only(
+                              right: adaptSize.adaptWidth(desiredSize: 40),
+                            ),
+                            child: SizedBox(
+                              width: adaptSize.adaptWidth(desiredSize: 100),
+                              height: adaptSize.adaptHeight(desiredSize: 28),
+                              child: defaultButton(
+                                  textColor: Colors.grey,
+                                  buttonColor: Colors.white,
+                                  buttonBorderSideColor: Colors.grey,
+                                  buttonText: "exit",
+                                  actionFunc: () {
+                                    exit(0);
+                                  },
+                                  prefButtonWidth:
+                                      adaptSize.adaptWidth(desiredSize: 120),
+                                  prefButtonHeight:
+                                      adaptSize.adaptHeight(desiredSize: 28),
+                                  adaptiveSize: adaptSize),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                     const Spacer()
                   ],

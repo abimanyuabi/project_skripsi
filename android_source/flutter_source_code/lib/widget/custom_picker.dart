@@ -11,8 +11,8 @@ Widget customPicker(
     Color? pickerColor,
     String? pickerSuffix}) {
   return SizedBox(
-    width: adaptiveSize.adaptWidth(desiredSize: 66),
-    height: adaptiveSize.adaptHeight(desiredSize: 38),
+    width: adaptiveSize.adaptWidth(desiredSize: 84),
+    height: adaptiveSize.adaptHeight(desiredSize: 60),
     child: Container(
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
@@ -26,23 +26,27 @@ Widget customPicker(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                headingText2(
-                    text: pickerSuffix == null
-                        ? value.toString()
-                        : value.toString() + pickerSuffix,
-                    adaptiveSize: adaptiveSize),
                 Padding(
                   padding: EdgeInsets.only(
-                      bottom: adaptiveSize.adaptHeight(desiredSize: 8)),
+                      left: adaptiveSize.adaptWidth(desiredSize: 4)),
+                  child: headingText2(
+                      text: pickerSuffix == null
+                          ? value.toString()
+                          : value.toString() + pickerSuffix,
+                      adaptiveSize: adaptiveSize),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(
+                      bottom: adaptiveSize.adaptHeight(desiredSize: 4)),
                   child: SizedBox(
-                    width: adaptiveSize.adaptWidth(desiredSize: 18),
-                    height: adaptiveSize.adaptHeight(desiredSize: 36),
+                    width: adaptiveSize.adaptWidth(desiredSize: 36),
+                    height: adaptiveSize.adaptHeight(desiredSize: 62),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(
-                          height: adaptiveSize.adaptHeight(desiredSize: 12),
+                          height: adaptiveSize.adaptHeight(desiredSize: 22),
                           child: IconButton(
                             padding: const EdgeInsets.all(0),
                             onPressed: () => value >= maxValue
@@ -50,11 +54,11 @@ Widget customPicker(
                                 : notifyableValue.value =
                                     notifyableValue.value + 1,
                             icon: const Icon(Icons.arrow_drop_up),
-                            iconSize: adaptiveSize.adaptWidth(desiredSize: 22),
+                            iconSize: adaptiveSize.adaptWidth(desiredSize: 30),
                           ),
                         ),
                         SizedBox(
-                          height: adaptiveSize.adaptHeight(desiredSize: 12),
+                          height: adaptiveSize.adaptHeight(desiredSize: 22),
                           child: IconButton(
                             padding: const EdgeInsets.all(0),
                             onPressed: () => value == 0
@@ -62,7 +66,7 @@ Widget customPicker(
                                 : notifyableValue.value =
                                     notifyableValue.value - 1,
                             icon: const Icon(Icons.arrow_drop_down),
-                            iconSize: adaptiveSize.adaptWidth(desiredSize: 22),
+                            iconSize: adaptiveSize.adaptHeight(desiredSize: 30),
                           ),
                         ),
                       ],

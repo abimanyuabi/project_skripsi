@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AdaptiveSize {
-  double pixPreferredWidth = 428;
-  double pixPreferredHeight = 926;
+  double pixPreferredWidth = 412;
+  double pixPreferredHeight = 868;
   late Size deviceSize;
   AdaptiveSize({required this.deviceSize});
   double adaptWidth({required double desiredSize}) {

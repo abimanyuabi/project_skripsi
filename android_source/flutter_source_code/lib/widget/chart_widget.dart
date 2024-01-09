@@ -34,7 +34,8 @@ Widget sensorReadingChartView(
                 )),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 primaryXAxis: CategoryAxis(),
                 title: ChartTitle(text: "Water Ph"),
@@ -54,7 +55,8 @@ Widget sensorReadingChartView(
             ),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: "Water Temperature"),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -74,7 +76,8 @@ Widget sensorReadingChartView(
             ),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: "Water Usage"),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -122,7 +125,8 @@ Widget dosingHistoryChartview(
               )),
           const Spacer(),
           SizedBox(
-            height: adaptiveSize.adaptHeight(desiredSize: 200),
+            height: adaptiveSize.adaptHeight(
+                desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
             child: SfCartesianChart(
               title: ChartTitle(text: "Alkalinity"),
               tooltipBehavior: TooltipBehavior(enable: true),
@@ -141,7 +145,8 @@ Widget dosingHistoryChartview(
           ),
           const Spacer(),
           SizedBox(
-            height: adaptiveSize.adaptHeight(desiredSize: 200),
+            height: adaptiveSize.adaptHeight(
+                desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
             child: SfCartesianChart(
               title: ChartTitle(text: "Calcium"),
               tooltipBehavior: TooltipBehavior(enable: true),
@@ -160,7 +165,8 @@ Widget dosingHistoryChartview(
           ),
           const Spacer(),
           SizedBox(
-            height: adaptiveSize.adaptHeight(desiredSize: 200),
+            height: adaptiveSize.adaptHeight(
+                desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
             child: SfCartesianChart(
               title: ChartTitle(text: "Magnesium"),
               tooltipBehavior: TooltipBehavior(enable: true),
@@ -213,7 +219,8 @@ Widget waterChemistryChartView(
                 )),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: "Alkalinity"),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -232,7 +239,8 @@ Widget waterChemistryChartView(
             ),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: "Calcium"),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -251,7 +259,8 @@ Widget waterChemistryChartView(
             ),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: "Magnesium"),
                 tooltipBehavior: TooltipBehavior(enable: true),
@@ -270,7 +279,8 @@ Widget waterChemistryChartView(
             ),
             const Spacer(),
             SizedBox(
-              height: adaptiveSize.adaptHeight(desiredSize: 200),
+              height: adaptiveSize.adaptHeight(
+                  desiredSize: adaptiveSize.deviceSize.height / 10 * 3),
               child: SfCartesianChart(
                 title: ChartTitle(text: chartName ?? "Salinity"),
                 tooltipBehavior: TooltipBehavior(enable: true),

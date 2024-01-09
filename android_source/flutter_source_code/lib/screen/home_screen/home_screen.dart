@@ -248,7 +248,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(
-                height: adaptSize.pixPreferredHeight - 200,
+                height: adaptSize.pixPreferredHeight -
+                    ((adaptSize.pixPreferredHeight / 10) * 3.2),
                 child: ValueListenableBuilder(
                   valueListenable: pageIndex,
                   builder: ((context, pageIndexValue, child) =>
@@ -263,7 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: SizedBox(
-        height: (adaptSize.adaptHeight(desiredSize: 58)),
+        height: (adaptSize.adaptHeight(
+            desiredSize: adaptSize.deviceSize.height / 10.5)),
         child: ValueListenableBuilder(
           valueListenable: pageIndex,
           builder: (context, value, child) => BottomNavigationBar(

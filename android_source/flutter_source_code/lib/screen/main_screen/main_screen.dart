@@ -73,6 +73,7 @@ Widget mainScreen(
                             adaptSize.adaptHeight(desiredSize: 24),
                         prefButtonWidth: adaptSize.adaptWidth(desiredSize: 52),
                         actionFunc: () async {
+                          print(adaptSize.deviceSize.width);
                           if (viewingMode.value != true) {
                             feedingMode.value = true;
                             await deviceModeProviders.updateDeviceMode(
@@ -94,6 +95,7 @@ Widget mainScreen(
                                 ? Colors.white
                                 : Colors.black,
                             actionFunc: () async {
+                              print(adaptSize.deviceSize.height);
                               feedingMode.value = false;
                               if (viewingModeFlag == false) {
                                 await deviceModeProviders.updateDeviceMode(
@@ -282,7 +284,7 @@ Widget mainScreen(
         ),
         SizedBox(
           width: adaptSize.deviceSize.width,
-          height: (adaptSize.deviceSize.height / 3) * 5 + 60,
+          height: (adaptSize.deviceSize.height / 5) * 10.5,
           child: Padding(
             padding: EdgeInsets.only(
                 left: adaptSize.adaptWidth(desiredSize: 20),
@@ -299,7 +301,7 @@ Widget mainScreen(
                   child: sensorReadingChartView(
                       adaptiveSize: adaptSize,
                       arrayOfSensor: parameterProviders.listOfensorModels,
-                      chartHeight: 620,
+                      chartHeight: adaptSize.deviceSize.height / 10 * 8.1,
                       chartName: "Sensor Reading"),
                 ),
                 Padding(
@@ -309,7 +311,7 @@ Widget mainScreen(
                   child: waterChemistryChartView(
                     adaptiveSize: adaptSize,
                     arrayOfParameter: parameterProviders.waterChemistryModels,
-                    chartHeight: 820,
+                    chartHeight: adaptSize.deviceSize.height / 10 * 11.6,
                   ),
                 )
               ],

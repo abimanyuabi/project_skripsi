@@ -48,8 +48,8 @@ class DeviceModeViewModel with ChangeNotifier {
             .once()
             .then((event) {
           deviceModeModel = DeviceModeModel(
-              deviceMode: (event.snapshot.value as Map)["16"],
-              waveFormMode: (event.snapshot.value as Map)["17"]);
+              deviceMode: (event.snapshot.value as Map)["17"],
+              waveFormMode: (event.snapshot.value as Map)["18"]);
         });
         dataCommStatus = DataCommStatus.success;
         notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_source_code/utility/adaptsize.dart';
 import 'package:flutter_source_code/viewmodel/device_mode_viewmodel/device_mode_viewmodel.dart';
 import 'package:flutter_source_code/viewmodel/dosing_utility_viewmodel/dosing_utility_viewmodel.dart';
@@ -25,21 +26,18 @@ class _SplashScreenLoadState extends State<SplashScreenLoad> {
         Provider.of<LightUtilityViewModel>(context, listen: false);
     final deviceModeProviders =
         Provider.of<DeviceModeViewModel>(context, listen: false);
-    if (parameterProviders.isUserExists) {
-      Future.delayed(Duration.zero, (() {
-        parameterProviders.getWaterChemistryRecord();
-        dosingProviders.getDosingLog();
-        parameterProviders.getNewSensorDataRTDB();
-        ledProfileProviders.getLedProfile();
-        deviceModeProviders.getDeviceMode();
-      }));
 
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-        Navigator.pushNamed(context, '/home_screen');
-      });
-    } else {
-      Navigator.pushNamed(context, '/login_screen');
-    }
+    Future.delayed(Duration.zero, (() {
+      parameterProviders.getWaterChemistryRecord();
+      dosingProviders.getDosingLog();
+      parameterProviders.getNewSensorDataRTDB();
+      ledProfileProviders.getLedProfile();
+      deviceModeProviders.getDeviceMode();
+    }));
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      Navigator.pushNamed(context, '/home_screen');
+    });
   }
 
   @override

@@ -28,8 +28,8 @@ class LightUtilityViewModel with ChangeNotifier {
     if (currUser != null) {
       try {
         await firebaseRTDBObject
-            .child("$parentDataPath/$currUser/is_new_data")
-            .set({"device_profile": true});
+            .child("$parentDataPath/$currUser/is_new_data/")
+            .update({"device_profile": true});
         dataCommStatus = DataCommStatus.success;
         notifyListeners();
       } catch (e) {
