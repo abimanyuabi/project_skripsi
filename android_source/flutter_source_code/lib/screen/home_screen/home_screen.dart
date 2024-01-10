@@ -41,11 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final databaseReference = FirebaseDatabase.instance.ref().child(
         "aquariums_data_prod/${parameterProviders.currUserId}/water_parameters/sensor_readings");
     // Set up the listener
-    databaseReference.onValue.listen((event) async {
-      String? currUser =
-          await flutterSecureStorageObject.read(key: "curr_user_uid");
+    databaseReference.onValue.listen((event) {
       // Handle the event, event.snapshot.value contains the new data
-      print(currUser);
       if (event.snapshot.value != null) {
         List listenerResponse = event.snapshot.value as List;
         if (isfirstBuild == false) {
