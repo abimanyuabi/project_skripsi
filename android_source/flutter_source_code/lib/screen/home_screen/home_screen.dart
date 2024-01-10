@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_source_code/screen/debug_screen/debug_screen.dart';
 import 'package:flutter_source_code/screen/dosing_utility_screen/dosing_utility_screen.dart';
 import 'package:flutter_source_code/screen/light_utility_screen/light_utility_screen.dart';
@@ -31,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    const flutterSecureStorageObject = FlutterSecureStorage();
+
     final parameterProviders =
         Provider.of<ParameterViewModel>(context, listen: false);
 
@@ -38,17 +41,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final databaseReference = FirebaseDatabase.instance.ref().child(
         "aquariums_data_prod/${parameterProviders.currUserId}/water_parameters/sensor_readings");
     // Set up the listener
-    databaseReference.onValue.listen((event) {
+    databaseReference.onValue.listen((event) async {
+      String? currUser =
+          await flutterSecureStorageObject.read(key: "curr_user_uid");
       // Handle the event, event.snapshot.value contains the new data
-      List listenerResponse = event.snapshot.value as List;
-      if (isfirstBuild == false) {
-        parameterProviders.recordSensorLogFirestore(
-            ph: listenerResponse[1],
-            temp: listenerResponse[2],
-            waterConsumption: listenerResponse[3]);
+      print(currUser);
+      if (event.snapshot.value != null) {
+        List listenerResponse = event.snapshot.value as List;
+        if (isfirstBuild == false) {
+          parameterProviders.recordSensorLogFirestore(
+              ph: listenerResponse[1],
+              temp: listenerResponse[2],
+              waterConsumption: listenerResponse[3]);
+        }
+      } else {
+        parameterProviders.getSensorLogFirestore();
+        isfirstBuild = false;
       }
-      parameterProviders.getSensorLogFirestore();
-      isfirstBuild = false;
     });
   }
 
