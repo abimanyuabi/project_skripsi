@@ -49,7 +49,7 @@ int doseEventFlag = 0; // dose event flag that points out which pump channel nee
 int doseMinuteTemp = 0;
 float dosePumpSpeed = 0.25; //speed volume ml/second
 int doseCounter = 0; // count every dose event
-int doseOffset = 1; // dose offset between every dose event to separate each dose event
+int doseOffset = 2; // dose offset between every dose event to separate each dose event
 const int dosePumpPins [3] = {A2, A1, A0}; //dosing pump output pins
 unsigned int doseTriggerDuration [3] = {0, 0, 0}; //dosing trigger duration in millisecond according to millis counter
 int doseNeeded [3] = {1, 20, 20}; // needed dose for alk, cal, mag
@@ -135,22 +135,10 @@ void loop() {
     if(transCode == 'k'){ //transcode 'g' indicate there's new debug data from firebase already transmitted in serial
       getDebugDataFromEsp();
     }
-    if(transCode == 'g'){ //transcode 'g' indicate the wifi is offline and so do the firebase
-      wifiStatus = false;
-      firebaseStatus = false;
-    }
-    else if(transCode == 'i'){ //transcode 'i' indicate the wifi and firebase is good
-      wifiStatus = true;
-      firebaseStatus = true;
-    }
-    else if(transCode == 'h'){ //transcode 'h' indicate the wifi is online but the firebase is offline
-      firebaseStatus = false;
-      wifiStatus = true;
-    }
-    else if(transCode == 'm'){ //transcode that instruct master to halt
+    else if(transCode == 'm' || transCode == 'g' || transCode == 'h'){ //transcode that instruct master to halt
       isHalted = true;
     }
-    else if (transCode == 'n'){ //transcode that instruct master to dispell any halt status
+    else if (transCode == 'n' ||transCode == 'i'){ //transcode that instruct master to dispell any halt status
       isHalted = false;
     }
     else{ //when transCode dont meet any condition
@@ -159,6 +147,7 @@ void loop() {
   }
   if(rtc.second() != globalSecondTemp1s){//run every 1s
       globalSecondTemp1s = rtc.second();
+      Serial.println(deviceState);
       if(wavePumpCycle == wavePumpDutyDuration){ //when wavepump cycle is equal to its duration limit, it would be reset to zero
         wavePumpCycle = 0;
       }
@@ -167,9 +156,6 @@ void loop() {
   if(rtc.minute() != globalMinuteTemp1m){//run every 1 minute to evaluate dosing scheduler
       globalMinuteTemp1m = rtc.minute();
       dosingScheduler(); //dose scheduler
-      Serial.println("doseFlag : "+String(doseEventFlag));
-      Serial.println("currMinute : " +String(minuteCounter));
-      Serial.println("doseMinuteTemp : " +String(doseMinuteTemp));
     }
   if(isNewData == true){ //check is there new data from firebase?
     ledScheduler(); //when there's new data and valid >0 assign led final strength with new value
@@ -188,6 +174,7 @@ void loop() {
     digitalWrite(wavePumpLeft, debugData[10]);
     digitalWrite(wavePumpRight, debugData[11]);
   }else if(debugData[12]==0){ // if debug mode debugData[12] is false(==0) device will enter working mode and utilize any active scheduler
+  
     if(deviceState == 1){ //working mode in normal mode regulate normal led, return pump and wave pump state evaluation
       evaluateLedState(rtc.hour());
       evaluateReturnPumpState(true);
@@ -210,7 +197,6 @@ void loop() {
     }
     wavemakerScheduler(); //schedule and evaluate wavemaker state
     evaluateDoseState(); //schedule and evaluate dose pump state
-    //evaluatePanelState(); //evaluate panel state
   }
 }
 void ledScheduler(){ //led strength calculator for respective timings
@@ -359,14 +345,10 @@ void evaluateDoseState(){
     }
     if(isDoseMillisSync == true){ // when true pump activated for pre-determined duration 
       digitalWrite(dosePumpPins[doseEventFlag-1], LOW);//activate pump pin to high
-      Serial.println("dose");
       //evaluate the dose channel state
       if(currMillis - doseMillisTemp > doseTriggerDuration[doseEventFlag-1]){ // when dose event has elapsed for the pre-deternmined duration, the pump de-activate and all event flag & time tracking dispelled & resetted
         digitalWrite(dosePumpPins[doseEventFlag-1], HIGH);
         isDoseEventDone[doseEventFlag-1] = true;
-        Serial.println(doseEventFlag);
-        Serial.println(doseTriggerDuration[doseEventFlag-1]);
-        Serial.println(currMillis - doseMillisTemp);
         doseMillisTemp = 0;
         isDoseMillisSync = false;
         doseEventFlag = 0;
@@ -414,9 +396,11 @@ void evaluatePanelState(){
 
 //data transmission
 void getDeviceProfileFromEsp(){ //read serial communication to receive new device profile data from esp
+Serial.println("oke");
   if(Serial.available()){ // Read the incoming data and populate the array
     for (int i = 0; i < 18; i++) {
       int retrievedData = Serial.parseInt();
+      Serial.println(retrievedData);
       if(i>=0 && i<=3 && retrievedData>=0 && retrievedData <=24){
         ledTimings[i]=retrievedData;
       }else if (i>= 4 && i<= 7 && retrievedData>0&& retrievedData <=100){
@@ -425,11 +409,11 @@ void getDeviceProfileFromEsp(){ //read serial communication to receive new devic
         ledBaseStrength[i-8] = retrievedData;
       }else if (i>=12 && i<=14 && retrievedData>0&& retrievedData <=10){
         doseNeeded[i-12] = retrievedData;
-      }else if(i == 15 && retrievedData>0&& retrievedData <48){
+      }else if(i == 15 && retrievedData > 0 && retrievedData < 48){
         doseDivider = retrievedData;
-      }else if(i == 16 && retrievedData>0&& retrievedData <=4){
+      }else if(i == 16 && retrievedData > 0 && retrievedData <= 3){
         deviceState = retrievedData;
-      }else if(i == 17 && retrievedData>0&& retrievedData <=3){
+      }else if(i == 17 && retrievedData > 0 && retrievedData <= 3){
         waveMode = retrievedData;
       }
       Serial.read(); // Read the comma separator

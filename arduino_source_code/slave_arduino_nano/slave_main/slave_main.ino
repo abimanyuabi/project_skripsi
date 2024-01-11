@@ -8,7 +8,7 @@ bool isHalted = true;
 char transCode = '-';
 
 //timing declaration
-const unsigned long timingTrigger = 1000;
+const unsigned long timingTrigger = 60000;
 unsigned long timingTimeStamp = 0;
 unsigned long timingCurrentMillis = 0;
 const unsigned long sensorTrigger = 200;
@@ -36,7 +36,9 @@ DallasTemperature temperatureSensor(&tempDataLine);
 //ph sensor parameter declaration
 #define phSensorPin A0
 float phReading = 1.0;
-const int phSamplingCount = 10;
+float phKumulatif = 0.0;
+int phCount = 0;
+const int phSamplingCount = 5;
 const float adcResolution = 1024.0;
 void setup() {
   // put your setup code here, to run once:
@@ -54,11 +56,11 @@ void loop() {
   timingCurrentMillis = millis();
   if(timingCurrentMillis - timingTimeStamp >= timingTrigger){
     timingTimeStamp = timingCurrentMillis;
-    Serial.println(temperatureReading);
-    Serial.println(phReading);
-    Serial.println(waterLevelStatus);
     //send sensor data
     if(isHalted == false){
+      phReading = phKumulatif/phCount;
+      phKumulatif = 0.0;
+      phCount = 0;
       sendSensorDataToEsp();
     }
   }
@@ -67,15 +69,23 @@ void loop() {
     // ph read
     int phAdcRead=0;
     for (int i = 0; i < phSamplingCount; i++){
-      phAdcRead += analogRead(phSensorPin);
+      phAdcRead += analogRead(phSensorPin)-110;
+      delay(100);
     }
-    float avgPhVoltage = (phAdcRead/(phSamplingCount*1.0)) * (5 / 1024.0);
-    phReading = abs(7 + ((2.5-avgPhVoltage) / 0.18)); 
+    float avgPhVoltage = (phAdcRead/phSamplingCount) * (5 / 1024.0);
+    phReading = abs(7 + ((2.5-avgPhVoltage) / 0.15)); 
     //temp read
     temperatureSensor.requestTemperatures();
     temperatureReading = temperatureSensor.getTempCByIndex(0);
     //check waterLevel
     waterLevelStatus= digitalRead(waterLevelSensorPin);
+    phKumulatif = phKumulatif+phReading;
+    phCount = phCount+1;
+    Serial.println("ph :" +String(phReading));
+    Serial.println("temperature :" +String(temperatureReading));
+    Serial.println("water level :"+String(waterLevelStatus));
+    Serial.println("avg adc read"+String(phAdcRead/phSamplingCount));
+    Serial.println("avg volt: "+String(avgPhVoltage));
   }
   //check serial comm
   if(Serial.available()){
